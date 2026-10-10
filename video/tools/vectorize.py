@@ -63,5 +63,11 @@ m = ((g[..., 3] > 128) & (g[..., :3].mean(-1) < 128)).astype(np.uint8) * 255
 gl = [{"name": "mark", "color": "#ffffff", "z": 0, "polys": polys(m, 2.0)}]
 cv2.imwrite("out/gl_debug.png", m)
 
-json.dump({"fox": norm(fox, S), "genlayer": norm(gl, S)}, open("src/logos.json", "w"))
-for L in fox + gl: print(L["name"], len(L["polys"]), sum(len(p["outer"]) for p in L["polys"]))
+# --- Internet Court mark: white strokes on red
+c = cv2.resize(cv2.imread("assets/internetcourt.jpg"), (S, S), interpolation=cv2.INTER_CUBIC)
+m = (c.min(-1) > 150).astype(np.uint8) * 255
+m = cv2.morphologyEx(m, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+court = [{"name": "mark", "color": "#f2f2f2", "z": 0, "polys": polys(m, 1.2)}]
+
+json.dump({"fox": norm(fox, S), "genlayer": norm(gl, S), "court": norm(court, S)}, open("src/logos.json", "w"))
+for L in fox + gl + court: print(L["name"], len(L["polys"]), sum(len(p["outer"]) for p in L["polys"]))

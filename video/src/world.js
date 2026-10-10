@@ -149,6 +149,24 @@ export async function initWorld(canvas, logos) {
   const genGlow = makeGlow(0x7461ff, 6.5); gen.add(genGlow);
   scene.add(gen);
 
+  // ---- Internet Court mark: white caps, red glowing sides
+  const court = new THREE.Group(), courtInner = new THREE.Group();
+  court.add(courtInner);
+  const cCap = new THREE.MeshPhysicalMaterial({ color: 0xf6f3f3, metalness: .35, roughness: .3, clearcoat: 1, clearcoatRoughness: .1, envMapIntensity: .8 });
+  const cSide = new THREE.MeshStandardMaterial({ color: 0x5a0d10, roughness: .35, metalness: .3, emissive: 0xe0262c, emissiveIntensity: 1.3 });
+  const courtMats = [cCap, cSide];
+  const cbox = new THREE.Box2();
+  for (const p of logos.court[0].polys) for (const [x, y] of p.outer) cbox.expandByPoint(new THREE.Vector2(x, y));
+  const cc = cbox.getCenter(new THREE.Vector2()), cspan = Math.max(cbox.max.x - cbox.min.x, cbox.max.y - cbox.min.y);
+  for (const p of logos.court[0].polys) {
+    const geo = new THREE.ExtrudeGeometry(shapeFrom(p), { depth: .3, bevelEnabled: true, bevelThickness: .03, bevelSize: .014, bevelSegments: 3, curveSegments: 1 });
+    geo.translate(-cc.x, -cc.y, -.15);
+    geo.scale(2 / cspan, 2 / cspan, 1);
+    courtInner.add(new THREE.Mesh(geo, [cCap, cSide]));
+  }
+  const courtGlow = makeGlow(0xe0262c, 6.5); court.add(courtGlow);
+  scene.add(court);
+
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
   const bloom = new UnrealBloomPass(new THREE.Vector2(W / 2, H / 2), .7, .55, .86);
@@ -176,6 +194,7 @@ export async function initWorld(canvas, logos) {
       pMat.uniforms.uAlpha.value = st.particles ?? 1;
       place(fox, foxMats, foxGlow, st.fox && { ...st.fox, size: st.fox.size * 1.1 }, t);
       place(gen, genMats, genGlow, st.gen, t);
+      place(court, courtMats, courtGlow, st.court, t);
       bloom.strength = st.bloom ?? .7;
       camera.position.x = Math.sin(t * .13) * .12;
       camera.position.y = Math.cos(t * .11) * .08;

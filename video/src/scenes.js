@@ -8,7 +8,7 @@ export const SCENES = [];
 const stage = () => document.getElementById('stage');
 const A = (p, cls, html, css = '') => { const e = el('div', 'abs ' + (cls || ''), html, p); e.style.cssText += css; return e; };
 const hide = e => set(e, { o: 0 });
-const MM = '../assets/metamask.png', GL = '../assets/genlayer.png';
+const MM = '../assets/metamask.png', GL = '../assets/genlayer.png', IC = '../assets/internetcourt.jpg';
 
 function scene(name, dur, build, opts = {}) {
   const T0 = SCENES.reduce((a, s) => a + s.dur, 0);
@@ -126,12 +126,13 @@ scene('reveal', 7, (R, T0) => {
   const ty1 = typer(l1, "@MetaMask published a case study on how @GenLayer's", T0 + 1.7, 40, { seed: 12, caret: false, vol: .8 });
   impact(T0 + 1.0, 1.25);
   ev('riser', T0 - 2.0, { d: 2.0 });
-  impact(T0 + 3.4, .6);
+  impact(T0 + 3.4, 1.0);
   cs.forEach((_, i) => ev('pop', T0 + 4.1 + i * .15));
   return {
     update(lt) {
       const t = T0 + lt;
       pop(x, lt, 1.05, .5, .2);
+      if (lt > 3.0) set(x, { o: 1 - seg(lt, 3.0, 3.2), s: 1 + seg(lt, 3.0, 3.2) });
       tyL.update(t); set(lab, { o: lt > 1.3 ? 1 : 0 });
       ty1.update(t);
       const p = seg(lt, 3.3, 3.9);
@@ -147,8 +148,16 @@ scene('reveal', 7, (R, T0) => {
       const g = flyIn(lt, .05, 1.0, { x: 2420, y: 300 }, { x: 1380, y: 395, size: 430 }, -1);
       f.ry += Math.sin(idle * .9) * .45 + out * Math.PI * 2; g.ry += Math.sin(idle * .9 + 1.5) * .45 - out * Math.PI * 2;
       f.y += Math.sin(idle * 1.3) * 8; g.y += Math.cos(idle * 1.3) * 8;
+      const spread = E.outBack(seg(lt, 3.3, 3.7)) * 50;
+      f.x -= spread; g.x += spread;
       f.size *= 1 - out; g.size *= 1 - out;
-      return { fox: f, gen: g };
+      const cp = seg(lt, 3.0, 3.4), cl = Math.max(0, lt - 3.4);
+      const c = {
+        x: 960, y: lerp(-300, 395, E.inCubic(cp)) - (lt > 3.4 ? Math.exp(-cl * 7) * Math.sin(cl * 24) * 18 : 0),
+        z: 0, size: 300 * (1 - out), o: clamp(cp * 4), glow: .32,
+        ry: (1 - E.outCubic(cp)) * Math.PI * 3 + Math.sin(cl * .9 + .7) * .4 - out * Math.PI * 2, rx: (1 - cp) * .6,
+      };
+      return { fox: f, gen: g, court: c };
     },
   };
 }, { mix: .5 });
@@ -573,7 +582,7 @@ scene('example', 9.5, (R, T0) => {
   shake(T0 + tRej, 10, .35);
   glitch(T0 + tFlag, .25, false);
   // court card
-  const court = A(R, 'panel vi-edge', `<div style="display:flex;align-items:center;gap:16px"><img src="${GL}" style="width:46px;filter:invert(1)"><span class="mono" style="font:800 24px JBM;letter-spacing:.14em">INTERNET COURT</span></div>
+  const court = A(R, 'panel vi-edge', `<div style="display:flex;align-items:center;gap:16px"><img src="${IC}" style="width:50px;border-radius:12px"><span class="mono" style="font:800 24px JBM;letter-spacing:.14em">INTERNET COURT</span></div>
     <div class="rev mono" style="margin-top:34px;font:500 22px JBM;color:#b8adff">reviewing signed evidence<span class="dots"></span></div>
     <div class="jur" style="display:flex;gap:16px;margin-top:22px">${'<i style="width:26px;height:26px;border-radius:50%;background:#2a2547;border:2px solid #8b7cff;display:inline-block"></i>'.repeat(5)}</div>
     <div class="ver" style="margin-top:34px"><div class="mono" style="font:700 20px JBM;letter-spacing:.2em;color:#8d8fa2">VERDICT · FINALIZED</div><div style="font:900 96px/1 'Inter Display';color:var(--red);letter-spacing:-.02em;margin-top:12px;text-shadow:0 0 40px rgba(255,59,78,.5)">REVOKE</div></div>
@@ -766,7 +775,7 @@ scene('finale', 8.5, (R, T0) => {
   const l2 = A(R, 'h1 center-x', '', 'top:760px;font-size:124px');
   l2.innerHTML = [...'GenLayer enforces intent.'].map(ch => `<span class="w grad">${ch === ' ' ? '&nbsp;' : ch}</span>`).join('');
   const ls = $$(l2, '.w');
-  const end = A(R, 'center-x', `<span class="chip"><img src="${MM}" style="width:30px;border-radius:7px"> @MetaMask&nbsp;×&nbsp;<img src="${GL}" style="width:26px;filter:invert(1)"> @GenLayer · Internet Court</span>&nbsp;&nbsp;<span class="chip" style="border-color:rgba(255,107,26,.5)">Read the thread 🧵</span>`, 'top:950px');
+  const end = A(R, 'center-x', `<span class="chip"><img src="${MM}" style="width:30px;border-radius:7px"> @MetaMask&nbsp;×&nbsp;<img src="${GL}" style="width:26px;filter:invert(1)"> @GenLayer&nbsp;·&nbsp;<img src="${IC}" style="width:30px;border-radius:7px"> Internet Court</span>&nbsp;&nbsp;<span class="chip" style="border-color:rgba(255,107,26,.5)">Read the thread 🧵</span>`, 'top:950px');
   const ty = typer(l1, 'Code enforces limits.', T0 + 1.45, 15, { seed: 90, caretEnd: T0 + 3.35 });
   impact(T0 + 1.0, 1.1);
   impact(T0 + 3.5, 1.5);
@@ -786,7 +795,11 @@ scene('finale', 8.5, (R, T0) => {
       f.ry += Math.sin(idle * .9) * .5 + hit * 1.2; g.ry += Math.sin(idle * .9 + 1.4) * .5 - hit * 1.2;
       f.y += Math.sin(idle * 1.2) * 10; g.y += Math.cos(idle * 1.2) * 10;
       f.size *= 1 + hit * .15; g.size *= 1 + hit * .15; f.glow = g.glow = .5 + hit;
-      return { fox: f, gen: g };
+      f.x -= 45; g.x += 45;
+      const c = flyIn(lt, .1, 1.0, { x: 960, y: -400 }, { x: 960, y: 380, size: 250 }, 1);
+      c.ry += Math.sin(idle * .9 + .7) * .45 + hit * .8; c.y += Math.sin(idle * 1.2 + 2) * 10;
+      c.size *= 1 + hit * .2; c.glow = .45 + hit;
+      return { fox: f, gen: g, court: c };
     },
     world(lt) { return { pulse: lt > 3.5 ? Math.exp(-(lt - 3.5) * 1.5) : 0, fade: seg(lt, 7.6, 8.5) }; },
   };
