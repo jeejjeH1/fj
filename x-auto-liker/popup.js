@@ -8,8 +8,22 @@ const els = {
   viewSetup: $('viewSetup'), viewRun: $('viewRun'),
   ringTotal: $('ringTotal'), ringPhase: $('ringPhase'), bigHeart: $('bigHeart'), phaseNum: $('phaseNum'), phaseLabel: $('phaseLabel'),
   progText: $('progText'), statusText: $('statusText'), queue: $('queue'),
-  stLiked: $('stLiked'), stAlready: $('stAlready'), stError: $('stError'),
+  stLiked: $('stLiked'), stAlready: $('stAlready'), stError: $('stError'), stAlreadyLabel: $('stAlreadyLabel'),
+  modes: $('modes'), manualCard: $('manualCard'), autoCard: $('autoCard'), autoNext: $('autoNext'),
+  closeTabManual: $('closeTabManual'), startText: $('startText'), next: $('next'), nextText: $('nextText'),
 };
+
+/* ───────────── mode switch ───────────── */
+let mode = 'manual';
+function setMode(m) {
+  mode = m;
+  els.modes.dataset.mode = m;
+  els.modes.querySelectorAll('.mode').forEach((b) => b.classList.toggle('is-on', b.dataset.mode === m));
+  els.manualCard.hidden = m !== 'manual';
+  els.autoCard.hidden = m !== 'auto';
+  els.startText.textContent = m === 'manual' ? 'شروع' : 'شروع لایک خودکار';
+}
+els.modes.querySelectorAll('.mode').forEach((b) => b.addEventListener('click', () => { setMode(b.dataset.mode); saveSettings(); }));
 
 const fa = (n) => String(n).replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[d]);
 const secRange = (lo, hi) => (lo === hi ? `${fa(lo)} ثانیه` : `${fa(lo)} تا ${fa(hi)} ثانیه`);
@@ -107,12 +121,18 @@ function saveSettings() {
   const [preMin, preMax] = preRange.get();
   const [delayMin, delayMax] = delayRange.get();
   chrome.storage.local.set({
-    settings: { linksText: els.links.value, preMin, preMax, delayMin, delayMax, closeTab: els.closeTab.checked },
+    settings: {
+      linksText: els.links.value, preMin, preMax, delayMin, delayMax, closeTab: els.closeTab.checked,
+      mode, autoNext: els.autoNext.checked,
+    },
   });
 }
 
 els.links.addEventListener('input', () => { updateCount(); saveSettings(); });
-els.closeTab.addEventListener('change', saveSettings);
+// one "close tab" setting, shown in both mode cards
+els.closeTab.addEventListener('change', () => { els.closeTabManual.checked = els.closeTab.checked; saveSettings(); });
+els.closeTabManual.addEventListener('change', () => { els.closeTab.checked = els.closeTabManual.checked; saveSettings(); });
+els.autoNext.addEventListener('change', saveSettings);
 els.clear.addEventListener('click', () => { els.links.value = ''; updateCount(); saveSettings(); els.links.focus(); });
 
 els.start.addEventListener('click', async (e) => {
@@ -126,12 +146,13 @@ els.start.addEventListener('click', async (e) => {
   const r = els.start.getBoundingClientRect();
   burst(r.left + r.width / 2, r.top + r.height / 2, 40);
   await chrome.runtime.sendMessage({
-    type: 'start', links, closeTab: els.closeTab.checked,
+    type: 'start', mode, autoNext: els.autoNext.checked, links, closeTab: els.closeTab.checked,
     preMinMs: preMin * 1000, preMaxMs: preMax * 1000, delayMinMs: delayMin * 1000, delayMaxMs: delayMax * 1000,
   });
 });
 
 els.stop.addEventListener('click', (e) => { ripple(e); chrome.runtime.sendMessage({ type: 'stop' }); });
+els.next.addEventListener('click', (e) => { ripple(e); chrome.runtime.sendMessage({ type: 'next' }); });
 els.back.addEventListener('click', async () => {
   const { runState } = await chrome.storage.local.get('runState');
   chrome.storage.local.set({ runState: { ...runState, dismissed: true } });
@@ -143,6 +164,7 @@ const PHASES = {
   reading: { label: 'صبر قبل از لایک', color: '#2ad4ff' },
   liking: { label: 'در حال لایک…', color: '#ff2e7e', spin: true },
   waiting: { label: 'تا توییت بعدی', color: '#a24bff' },
+  manual: { label: 'لایک کن و بزن «بعدی»', color: '#ff2e7e' },
   done: { label: 'همه انجام شد!', color: '#2fe39a' },
   stopped: { label: 'متوقف شد', color: '#ff4d5e' },
 };
@@ -199,7 +221,7 @@ function render(s) {
     li.className = '';
     if (r) {
       li.classList.add('is-done', `r-${r.result}`);
-      li.querySelector('.ico').textContent = r.result === 'liked' ? '♥' : r.result === 'already' ? '✓' : '!';
+      li.querySelector('.ico').textContent = { liked: '♥', already: '✓', skipped: '–' }[r.result] || '!';
       li.title = r.detail || '';
     } else if (!finished && i === s.index) {
       li.classList.add('is-current');
@@ -211,8 +233,10 @@ function render(s) {
   }
 
   const count = (k) => results.filter((r) => r.result === k).length;
+  const manual = s.mode === 'manual';
   setCount(els.stLiked, count('liked'));
-  setCount(els.stAlready, count('already'));
+  setCount(els.stAlready, count(manual ? 'skipped' : 'already'));
+  els.stAlreadyLabel.textContent = manual ? 'رد شد' : 'از قبل';
   setCount(els.stError, count('error'));
 
   els.ringTotal.style.strokeDashoffset = 1000 * (1 - (total ? done / total : 0));
@@ -223,11 +247,13 @@ function render(s) {
   els.phaseLabel.textContent = ph.label;
   els.ringPhase.style.setProperty('--phase-c', ph.color);
   els.ringPhase.classList.toggle('indeterminate', !!ph.spin);
-  els.bigHeart.classList.toggle('on', s.phase === 'waiting' || s.phase === 'done' || s.phase === 'liking');
+  els.bigHeart.classList.toggle('on', ['waiting', 'done', 'liking', 'manual'].includes(s.phase));
   els.bigHeart.classList.toggle('beating', s.phase === 'liking');
 
   els.stop.hidden = finished;
   els.back.hidden = !finished;
+  els.next.hidden = finished || !manual;
+  els.nextText.textContent = s.index >= total - 1 ? 'تمام' : 'بعدی';
 
   // celebrate only what happens while the popup is open
   if (prev.results !== null && results.length > prev.results) {
@@ -254,6 +280,11 @@ function tick() {
       els.ringPhase.style.strokeDashoffset = 1000 * (1 - left / span);
       els.ringPhase.classList.toggle('empty', left <= 0);
       els.phaseNum.innerHTML = `${fa(Math.ceil(left / 1000))}<small> ث</small>`;
+    } else if (s.running && s.phase === 'manual') {
+      const left = s.queue.length - s.index - 1;
+      els.ringPhase.classList.remove('empty');
+      els.ringPhase.style.strokeDashoffset = 1000 * (1 - (s.index + 1) / s.queue.length);
+      els.phaseNum.innerHTML = left > 0 ? `${fa(left)}<small> مونده</small>` : '<small>آخری!</small>';
     } else if (s.phase === 'done' || s.phase === 'stopped') {
       els.ringPhase.classList.remove('empty');
       els.ringPhase.style.strokeDashoffset = 0;
@@ -359,6 +390,9 @@ async function init() {
   const { settings = {}, runState } = await chrome.storage.local.get(['settings', 'runState']);
   els.links.value = settings.linksText ?? '';
   els.closeTab.checked = settings.closeTab ?? true;
+  els.closeTabManual.checked = els.closeTab.checked;
+  els.autoNext.checked = settings.autoNext ?? false;
+  setMode(settings.mode ?? 'manual');
   // older versions stored a single delay + random extra
   const dMin = settings.delayMin ?? settings.delay ?? 8;
   const dMax = settings.delayMax ?? (settings.delay != null ? settings.delay + (settings.jitter ?? 0) : 15);

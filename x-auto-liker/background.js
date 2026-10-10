@@ -1,5 +1,7 @@
-// Runs the like queue: one tab, navigated to each link in turn. For each link: open, wait the
-// user's "before like" time, like, then wait the "between likes" time before the next link.
+// Two modes, both using one tab navigated to each link in turn:
+// - manual: the extension only opens the links; the user likes and presses "Next" (popup,
+//   on-page overlay or Alt+N). Event-driven, so it survives service-worker restarts.
+// - auto: open, wait the user's "before like" time, like, then wait "between likes".
 // Progress lives in chrome.storage.local (runState) so the popup can be closed and reopened.
 
 let currentRun = 0; // bumped on every start/stop; a loop exits once its id is stale
@@ -25,10 +27,12 @@ async function setState(patch) {
   return next;
 }
 
-function summarize(results = []) {
+function summarize(results = [], mode = 'auto') {
   const count = (kind) => String(results.filter((r) => r.result === kind).length)
     .replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[d]);
-  return `${count('liked')} لایک، ${count('already')} از قبل، ${count('error')} خطا`;
+  return mode === 'manual'
+    ? `${count('liked')} لایک، ${count('skipped')} رد شد`
+    : `${count('liked')} لایک، ${count('already')} از قبل، ${count('error')} خطا`;
 }
 
 // Sleeps in small steps so Stop takes effect quickly.
@@ -119,7 +123,7 @@ async function run(opts) {
   startKeepAlive();
   await chrome.storage.local.set({
     runState: {
-      running: true, queue: links, results: [], statusText: '', tabId: null,
+      mode: 'auto', running: true, queue: links, results: [], statusText: '', tabId: null,
       index: 0, phase: 'opening', phaseStart: Date.now(), phaseEnd: null,
     },
   });
@@ -192,22 +196,117 @@ async function run(opts) {
   });
 }
 
+/* ───────────── manual mode ───────────── */
+
+// Injected: reads (never clicks) whether the focal tweet is liked.
+async function readLikeStateInPage(statusId) {
+  const findArticle = () => {
+    const articles = [...document.querySelectorAll('article[data-testid="tweet"]')];
+    return articles.find((a) => a.querySelector(`a[href*="/status/${statusId}"] time`)) ||
+      articles.find((a) => a.getAttribute('tabindex') === '-1');
+  };
+  for (let i = 0; i < 6; i++) {
+    const a = findArticle();
+    if (a?.querySelector('[data-testid="unlike"]')) return 'liked';
+    if (a?.querySelector('[data-testid="like"]')) return 'skipped';
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  return 'skipped';
+}
+
+async function startManual({ links, closeTab, autoNext }) {
+  currentRun++; // cancels any auto run still going
+  stopKeepAlive();
+  // Save the state before the first page loads, so the on-page panel finds it.
+  const tab = await chrome.tabs.create({ url: 'about:blank', active: true });
+  await chrome.storage.local.set({
+    runState: {
+      mode: 'manual', running: true, queue: links, results: [], index: 0, tabId: tab.id,
+      phase: 'manual', phaseStart: Date.now(), phaseEnd: null, closeTab, autoNext, statusText: '',
+    },
+  });
+  await chrome.tabs.update(tab.id, { url: links[0] });
+}
+
+let advancing = false; // ignore double presses while the next page is being opened
+async function manualNext() {
+  if (advancing) return;
+  const { runState: s } = await chrome.storage.local.get('runState');
+  if (!s?.running || s.mode !== 'manual') return;
+  advancing = true;
+  try {
+    const url = s.queue[s.index];
+    let result = 'skipped';
+    try {
+      const [inj] = await chrome.scripting.executeScript({
+        target: { tabId: s.tabId }, func: readLikeStateInPage, args: [url.match(/status\/(\d+)/)[1]],
+      });
+      result = inj?.result || 'skipped';
+    } catch { /* tab on another page or closed: count as skipped */ }
+
+    const results = [...s.results, { url, result }];
+    const index = s.index + 1;
+    if (index >= s.queue.length) {
+      await finishManual({ ...s, results }, false);
+      return;
+    }
+    await setState({ results, index, phaseStart: Date.now() });
+    await chrome.tabs.update(s.tabId, { url: s.queue[index], active: true });
+  } finally {
+    advancing = false;
+  }
+}
+
+async function finishManual(s, stopped) {
+  if (s.closeTab && !stopped) chrome.tabs.remove(s.tabId).catch(() => {});
+  await chrome.storage.local.set({
+    runState: {
+      ...s, running: false, phase: stopped ? 'stopped' : 'done', phaseEnd: null,
+      statusText: `${stopped ? 'متوقف شد' : 'تمام شد'} — ${summarize(s.results, 'manual')}`,
+    },
+  });
+}
+
+// Show the on-page panel each time the run's tab finishes loading a link.
+chrome.tabs.onUpdated.addListener(async (tabId, info) => {
+  if (info.status !== 'complete') return;
+  const { runState: s } = await chrome.storage.local.get('runState');
+  if (!s?.running || s.mode !== 'manual' || s.tabId !== tabId) return;
+  chrome.scripting.executeScript({ target: { tabId }, files: ['overlay.js'] }).catch(() => {});
+});
+
+// Closing the run's tab ends a manual run.
+chrome.tabs.onRemoved.addListener(async (tabId) => {
+  const { runState: s } = await chrome.storage.local.get('runState');
+  if (s?.running && s.mode === 'manual' && s.tabId === tabId) finishManual(s, true);
+});
+
+chrome.commands.onCommand.addListener((cmd) => { if (cmd === 'next-link') manualNext(); });
+
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === 'start') {
-    run({ ...msg, links: msg.links.slice(0, 30) });
+    const links = msg.links.slice(0, 30);
+    if (msg.mode === 'manual') startManual({ ...msg, links });
+    else run({ ...msg, links });
+    sendResponse({ ok: true });
+  } else if (msg.type === 'next') {
+    manualNext();
     sendResponse({ ok: true });
   } else if (msg.type === 'stop') {
     currentRun++;
     stopKeepAlive();
-    chrome.storage.local.get('runState').then(({ runState }) =>
-      setState({
+    chrome.storage.local.get('runState').then(({ runState }) => {
+      if (runState?.mode === 'manual') return finishManual(runState, true);
+      return setState({
         running: false, phase: 'stopped', phaseEnd: null,
         statusText: `متوقف شد — ${summarize(runState?.results)}`,
-      }));
+      });
+    });
     sendResponse({ ok: true });
   }
 });
 
-// If the worker was restarted mid-run, the loop is gone; mark the stale state as stopped.
+// If the browser restarted, the run's tab is gone; mark the stale state as stopped.
+// (A manual run survives worker restarts, so only reset on startup/update, not on wake-up.)
 chrome.runtime.onStartup.addListener(() => setState({ running: false }));
 chrome.runtime.onInstalled.addListener(() => setState({ running: false }));

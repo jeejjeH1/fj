@@ -239,3 +239,26 @@ textarea:focus { border-color: rgba(162, 75, 255, .7); box-shadow: 0 0 0 4px rgb
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* ── mode switch ───────────────────────────── */
+.modes { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; margin-bottom: 12px;
+  border-radius: 16px; background: var(--card); border: 1px solid var(--card-b); }
+.mode { position: relative; z-index: 1; border: 0; background: none; cursor: pointer; border-radius: 12px; padding: 7px 4px;
+  color: var(--muted); font: 500 11px/1.4 Vazirmatn, Tahoma, sans-serif; transition: color .35s; display: flex; flex-direction: column; align-items: center; }
+.mode b { font-size: 13.5px; font-weight: 900; }
+.mode.is-on { color: #fff; }
+.mode-glider { position: absolute; z-index: 0; top: 4px; bottom: 4px; right: 4px; width: calc(50% - 6px); border-radius: 12px;
+  background: var(--grad); box-shadow: 0 6px 18px rgba(255, 46, 126, .35); transition: transform .5s var(--spring); }
+.modes[data-mode="auto"] .mode-glider { transform: translateX(calc(-100% - 4px)); }
+
+.steps { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 7px; margin-bottom: 14px; }
+.steps li { display: flex; align-items: center; gap: 10px; font-size: 12.5px; padding: 6px 8px; border-radius: 11px; background: rgba(255, 255, 255, .035);
+  animation: rise .6s var(--ease) both; }
+.steps li:nth-child(2) { animation-delay: .08s; } .steps li:nth-child(3) { animation-delay: .16s; }
+.steps i { flex: none; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 8px; font-style: normal; font-weight: 900; font-size: 12px;
+  background: rgba(255, 255, 255, .07); }
+.steps li:nth-child(2) i { background: var(--pink); box-shadow: 0 0 12px rgba(255, 46, 126, .6); }
+kbd { margin-inline-start: auto; font: 500 10.5px/1 Vazirmatn, monospace; padding: 3px 6px; border-radius: 6px; background: rgba(255, 255, 255, .1); direction: ltr; }
+.cta kbd { margin: 0; background: rgba(0, 0, 0, .22); color: #fff; }
+.est.safe { color: var(--green); background: rgba(47, 227, 154, .1); }
+.run-actions #next { flex: 2; }

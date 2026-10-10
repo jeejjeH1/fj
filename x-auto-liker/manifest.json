@@ -1,12 +1,21 @@
 {
   "manifest_version": 3,
   "name": "X Auto Liker",
-  "version": "2.0.0",
-  "description": "لینک‌های توییتر/X (تا ۳۰ تا) را نوبتی باز می‌کند و لایک می‌کند، با فاصله‌ی زمانی دلخواه.",
+  "version": "3.0.0",
+  "description": "لینک‌های توییتر/X (تا ۳۰ تا) را نوبتی باز می‌کند؛ شما لایک می‌کنید و می‌روید بعدی. حالت خودکار هم دارد.",
   "permissions": ["tabs", "scripting", "storage"],
   "host_permissions": ["https://x.com/*", "https://twitter.com/*", "https://mobile.twitter.com/*"],
   "background": {
     "service_worker": "background.js"
+  },
+  "web_accessible_resources": [
+    { "resources": ["fonts/*.woff2"], "matches": ["https://x.com/*", "https://twitter.com/*", "https://mobile.twitter.com/*"] }
+  ],
+  "commands": {
+    "next-link": {
+      "suggested_key": { "default": "Alt+N" },
+      "description": "حالت دستی: رفتن به لینک بعدی"
+    }
   },
   "action": {
     "default_popup": "popup.html",

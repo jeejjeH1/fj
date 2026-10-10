@@ -3,9 +3,7 @@
 <head>
   <meta charset="utf-8">
   <title>X Auto Liker</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;900&display=swap">
+  <link rel="stylesheet" href="fonts/fonts.css">
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
@@ -40,6 +38,12 @@
   <main class="views">
     <!-- ───────── SETUP ───────── -->
     <section id="viewSetup" class="view is-active">
+      <div class="modes" id="modes" style="--d:0">
+        <button class="mode is-on" data-mode="manual"><b>دستی</b><span>خودت لایک می‌کنی</span></button>
+        <button class="mode" data-mode="auto"><b>خودکار</b><span>خودش لایک می‌کنه</span></button>
+        <i class="mode-glider"></i>
+      </div>
+
       <div class="card" style="--d:0">
         <div class="card-head">
           <h2>لینک‌ها <button id="clear" class="ghost-btn" title="پاک کردن همه">پاک کن</button></h2>
@@ -55,7 +59,26 @@
         <div id="warn" class="warn"></div>
       </div>
 
-      <div class="card" style="--d:1">
+      <div class="card" id="manualCard" style="--d:1">
+        <div class="card-head"><h2>حالت دستی</h2><span class="est safe">بدون کلیک خودکار</span></div>
+        <ol class="steps">
+          <li><i>۱</i>لینک را باز می‌کند</li>
+          <li><i>♥</i>شما لایک می‌کنید</li>
+          <li><i>۲</i>«بعدی» را می‌زنید <kbd>Alt+N</kbd></li>
+        </ol>
+        <label class="toggle">
+          <input id="autoNext" type="checkbox">
+          <span class="knob"></span>
+          بعد از لایکِ من، خودش برود بعدی
+        </label>
+        <label class="toggle" style="margin-top:10px">
+          <input id="closeTabManual" type="checkbox" checked>
+          <span class="knob"></span>
+          بستن تب در پایان کار
+        </label>
+      </div>
+
+      <div class="card" id="autoCard" style="--d:1">
         <div class="card-head"><h2>زمان‌بندی</h2><span class="est" id="est"></span></div>
 
         <div class="setting">
@@ -103,7 +126,7 @@
       <button id="start" class="cta" style="--d:2">
         <span class="cta-shine"></span>
         <svg><use href="#i-heart"/></svg>
-        <span>شروع لایک</span>
+        <span id="startText">شروع</span>
       </button>
     </section>
 
@@ -131,13 +154,14 @@
 
       <div class="stats">
         <div class="stat s-liked"><b id="stLiked">۰</b><span>لایک شد</span></div>
-        <div class="stat s-already"><b id="stAlready">۰</b><span>از قبل</span></div>
+        <div class="stat s-already"><b id="stAlready">۰</b><span id="stAlreadyLabel">از قبل</span></div>
         <div class="stat s-error"><b id="stError">۰</b><span>خطا</span></div>
       </div>
 
       <ol id="queue" class="queue"></ol>
 
       <div class="run-actions">
+        <button id="next" class="cta small" hidden><span class="cta-shine"></span><span id="nextText">بعدی</span><kbd>Alt+N</kbd></button>
         <button id="stop" class="stop-btn">توقف</button>
         <button id="back" class="cta small" hidden><span class="cta-shine"></span><span>لیست جدید</span></button>
       </div>
