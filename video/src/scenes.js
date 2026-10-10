@@ -51,19 +51,19 @@ const flyIn = (lt, t0, t1, from, to, spin = 1) => {
 scene('hook', 6, (R, T0) => {
   const meter = A(R, '', `
     <div style="display:flex;justify-content:space-between;align-items:center"><div class="label g"><i></i>Agent budget · weekly</div><div class="mono green" style="font:700 22px JBM;letter-spacing:.14em">● WITHIN BUDGET</div></div>
-    <div style="margin-top:18px;height:14px;border-radius:9px;background:rgba(255,255,255,.08);overflow:hidden"><div class="fill" style="height:100%;width:0;background:linear-gradient(90deg,#1fc977,#7cf5c0);box-shadow:0 0 20px #2be38b"></div></div>
-    <div class="amt mono" style="margin-top:14px;font:400 22px JBM;color:#9a9cad">$0.00 / $50.00</div>`, 'left:310px;top:250px;width:1300px');
+    <div style="margin-top:18px;height:14px;border-radius:9px;background:rgba(20,17,20,.07);overflow:hidden"><div class="fill" style="height:100%;width:0;background:linear-gradient(90deg,#141114,#141114)"></div></div>
+    <div class="amt mono" style="margin-top:14px;font:400 22px JBM;color:#7a7078">$0.00 / $50.00</div>`, 'left:310px;top:250px;width:1300px');
   const box = A(R, 'panel or-edge', '', 'left:310px;top:405px;width:1300px;height:300px;padding:58px 66px');
-  const l1 = el('div', '', '', box); l1.style.cssText = 'font:700 60px/1.25 Inter;letter-spacing:-.025em;color:#fff;white-space:nowrap';
-  const l2 = el('div', '', '', box); l2.style.cssText = 'font:800 66px/1.25 Inter;letter-spacing:-.025em;color:var(--red);margin-top:14px;white-space:nowrap';
-  const send = A(box, '', `<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#160800" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`,
-    'right:34px;bottom:34px;width:70px;height:70px;border-radius:20px;background:linear-gradient(180deg,#ff8a3a,#ff5f10);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 40px rgba(255,107,26,.4)');
-  const tag = A(R, 'chip mono', '<span style="color:var(--red)">▲</span>&nbsp;INTENT ≠ ACTION', 'left:1280px;top:735px;border-color:rgba(255,59,78,.6);background:rgba(60,8,14,.85);color:#ffd5da;font-size:22px');
+  const l1 = el('div', '', '', box); l1.style.cssText = 'font:700 60px/1.25 Inter;letter-spacing:-.025em;color:var(--ink);white-space:nowrap';
+  const l2 = el('div', '', '', box); l2.style.cssText = 'font:800 66px/1.25 Inter;letter-spacing:-.025em;color:var(--pk);margin-top:14px;white-space:nowrap';
+  const send = A(box, '', `<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`,
+    'right:34px;bottom:34px;width:70px;height:70px;border-radius:20px;background:linear-gradient(180deg,#141114,#141114);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 40px rgba(20,17,20,.4)');
+  const tag = A(R, 'chip mono', '<span style="color:var(--pk)">▲</span>&nbsp;INTENT ≠ ACTION', 'left:1280px;top:735px;border-color:rgba(224,98,142,.6);background:#fdecf2;color:#141114;font-size:22px');
 
   const tyA = typer(l1, 'Your AI agent can stay inside its budget', T0 + 1.15, 23, { seed: 3, caretEnd: T0 + 3.25 });
   const tyB = typer(l2, 'and still do the wrong thing.', T0 + 3.3, 15, { seed: 5 });
   const tg = tyB.end + .12;
-  glitch(tg, .5); flash(tg, .35, .45, '255,40,70'); shake(tg, 10, .4);
+  glitch(tg, .5); flash(tg, .35, .45, '255,40,70'); shake(tg, 4, .3);
   cur(T0 + .15, 1720, 1030, { show: true }); cur(T0 + .95, 1250, 520, { click: true }); cur(T0 + 1.7, 1380, 640, { hide: true });
 
   return {
@@ -94,7 +94,7 @@ scene('judgment', 4.5, (R, T0) => {
   const word = 'Judgment can.';
   b.innerHTML = [...word].map(c => `<span class="w grad" style="display:inline-block">${c === ' ' ? '&nbsp;' : c}</span>`).join('');
   const letters = $$(b, '.w');
-  const bar = A(R, '', '', 'left:560px;top:690px;width:800px;height:6px;border-radius:3px;background:linear-gradient(90deg,#ff8a2a,#ff4fa3,#8b7cff);box-shadow:0 0 30px #ff4fa3;transform-origin:0 50%');
+  const bar = A(R, '', '', 'left:560px;top:690px;width:800px;height:6px;border-radius:3px;background:linear-gradient(90deg,#141114,#e0628e,#e0628e);transform-origin:0 50%');
   wa.forEach((_, i) => ev('tick', T0 + .1 + i * .11));
   impact(T0 + 1.85, .9);
   return {
@@ -108,7 +108,7 @@ scene('judgment', 4.5, (R, T0) => {
         set(l, { o: clamp(p * 2), s: lerp(2.6, 1, E.outExpo(p)), b: (1 - p) * 18, y: (1 - E.outExpo(p)) * -40 });
       });
       const bp = ease(lt, 2.3, 2.9, E.outExpo);
-      bar.style.transform = `scaleX(${bp})`; bar.style.opacity = bp > 0 ? 1 : 0;
+      bar.style.transform = `scaleX(${bp})`; bar.style.opacity = 0;
     },
   };
 });
@@ -117,10 +117,10 @@ scene('judgment', 4.5, (R, T0) => {
 scene('reveal', 7, (R, T0) => {
   const lab = A(R, 'label center-x', '', 'top:96px;justify-content:center;display:flex');
   const labIn = el('span', '', '', lab);
-  const x = A(R, 'center-x', '×', 'top:300px;font:200 150px/1 Inter;color:#d7d8e6');
-  const l1 = A(R, 'mono center-x', '', 'top:668px;font:400 30px/1 JBM;color:#a4a6b8');
-  const big = A(R, 'h1 center-x', 'INTERNET COURT', 'top:722px;font-size:150px;letter-spacing:.02em');
-  const chips = A(R, 'center-x', `<span class="chip"><span class="or">●</span> AI agents</span>&nbsp;&nbsp;<span class="chip"><span class="vi">●</span> Payments</span>&nbsp;&nbsp;<span class="chip"><span style="color:#ff4fa3">●</span> Onchain judgment</span>`, 'top:908px');
+  const x = A(R, 'center-x', '×', 'top:300px;font:200 150px/1 Inter;color:#141114');
+  const l1 = A(R, 'mono center-x', '', 'top:668px;font:400 30px/1 JBM;color:#7a7078');
+  const big = A(R, 'h1 center-x', '<span class="grad">INTERNET COURT</span>', 'top:722px;font-size:150px;letter-spacing:.02em');
+  const chips = A(R, 'center-x', `<span class="chip"><span class="or">●</span> AI agents</span>&nbsp;&nbsp;<span class="chip"><span class="vi">●</span> Payments</span>&nbsp;&nbsp;<span class="chip"><span style="color:#e0628e">●</span> Onchain judgment</span>`, 'top:908px');
   const cs = $$(chips, '.chip');
   const tyL = typer(labIn, 'CASE STUDY', T0 + 1.35, 18, { seed: 11, caret: false });
   const ty1 = typer(l1, "@MetaMask published a case study on how @GenLayer's", T0 + 1.7, 40, { seed: 12, caret: false, vol: .8 });
@@ -138,7 +138,6 @@ scene('reveal', 7, (R, T0) => {
       const p = seg(lt, 3.3, 3.9);
       big.style.letterSpacing = lerp(.5, .02, E.outExpo(p)) + 'em';
       set(big, { o: clamp(p * 2), b: (1 - E.outExpo(p)) * 16, s: lerp(1.25, 1, E.outExpo(p)) });
-      big.classList.toggle('grad', true);
       cs.forEach((c, i) => pop(c, lt, 4.1 + i * .15, .45, .6));
     },
     logos(lt) {
@@ -172,17 +171,17 @@ scene('delegation', 9, (R, T0) => {
 
   const card = A(R, 'panel or-edge', '', 'left:1010px;top:150px;width:780px;height:780px');
   A(card, '', `<img src="${MM}" style="width:56px;height:56px;border-radius:14px;vertical-align:middle"> <span style="font:800 34px Inter;vertical-align:middle;margin-left:12px">Smart Account</span>`, 'left:36px;top:30px');
-  A(card, 'chip mono', 'DELEGATION', 'right:36px;top:36px;font-size:18px;color:var(--or2);border-color:rgba(255,107,26,.4)');
+  A(card, 'chip mono', 'DELEGATION', 'right:36px;top:36px;font-size:18px;color:var(--ink);border-color:rgba(20,17,20,.4)');
   const rows = [['TOKEN', 'USDC'], ['RECIPIENT', '0x7A3c…F91e'], ['BUDGET', '$50 / week'], ['MERCHANT', 'news-hub.api'], ['UNTIL', 'Oct 31, 2026']];
   const R0 = 130, RH = 104;
   const rowEls = rows.map(([k], i) => {
-    const r = A(card, '', `<div class="mono" style="width:210px;font:700 20px JBM;letter-spacing:.16em;color:#8d8fa2">${k}</div><div class="val" style="flex:1;font:600 34px Inter;white-space:nowrap"></div><div class="check">✓</div>`,
+    const r = A(card, '', `<div class="mono" style="width:210px;font:700 20px JBM;letter-spacing:.16em;color:#7a7078">${k}</div><div class="val" style="flex:1;font:600 34px Inter;white-space:nowrap"></div><div class="check">✓</div>`,
       `left:36px;right:36px;top:${R0 + i * RH}px;height:${RH}px;border-top:1px solid var(--line);display:flex;align-items:center`);
     return r;
   });
   const btn = A(card, 'btn', '<span class="a">Sign delegation&nbsp;→</span>', 'left:36px;right:36px;top:672px;height:82px');
-  const btnOk = A(card, 'btn', '🔒&nbsp;Delegation active', 'left:36px;right:36px;top:672px;height:82px;background:linear-gradient(180deg,#3df0a0,#18c172);color:#03140b;box-shadow:0 16px 50px rgba(43,227,139,.35)');
-  const pill = A(R, 'chip mono', 'PAY $240 → unknown-shop.xyz', 'left:1080px;top:470px;font-size:28px;padding:20px 30px;border-color:rgba(255,59,78,.7);background:rgba(60,8,14,.92);color:#ffd5da;z-index:3');
+  const btnOk = A(card, 'btn', '🔒&nbsp;Delegation active', 'left:36px;right:36px;top:672px;height:82px;background:linear-gradient(180deg,#141114,#141114);color:#ffffff;box-shadow:0 16px 50px rgba(20,17,20,.35)');
+  const pill = A(R, 'chip mono', 'PAY $240 → unknown-shop.xyz', 'left:1080px;top:470px;font-size:28px;padding:20px 30px;border-color:rgba(224,98,142,.7);background:#fdecf2;color:#141114;z-index:3');
   const stamp = A(R, 'stamp', 'BLOCKED<div style="font:700 20px JBM;letter-spacing:.2em;margin-top:10px;text-align:center">OUTSIDE SCOPE</div>', 'left:1190px;top:420px;z-index:4');
 
   const typers = [];
@@ -197,7 +196,7 @@ scene('delegation', 9, (R, T0) => {
   cur(tb, 1400, 150 + 672 + 41, { click: true }); ev('success', tb + .05);
   cur(T0 + 4.6, 1560, 1000, { hide: true });
   const th = T0 + 5.35;
-  ev('stamp', th); shake(th, 16, .45); flash(th, .25, .35, '255,40,70');
+  ev('stamp', th); shake(th, 5, .35); flash(th, .25, .35, '255,40,70');
   return {
     update(lt) {
       const t = T0 + lt;
@@ -214,7 +213,7 @@ scene('delegation', 9, (R, T0) => {
       set(pill, { o: lt < 4.7 ? 0 : 1 - bounce, x: lerp(900, 0, E.inCubic(pin)) + E.outCubic(bounce) * 260, r: E.outCubic(bounce) * 8 });
       const sp = seg(lt, 5.35, 5.6);
       set(stamp, { o: clamp(sp * 3), s: lerp(2.4, 1, E.outBack(sp, 1.4)), r: -8 });
-      card.style.borderColor = lt > 5.35 && lt < 7 ? `rgba(255,59,78,${.8 * (1 - seg(lt, 5.35, 7))})` : '';
+      card.style.borderColor = lt > 5.35 && lt < 7 ? `rgba(224,98,142,${.8 * (1 - seg(lt, 5.35, 7))})` : '';
       card.style.transform += lt > 5.35 && lt < 5.8 ? ` translateX(${noise1(lt * 50) * 10 * (1 - seg(lt, 5.35, 5.8))}px)` : '';
     },
   };
@@ -224,19 +223,19 @@ scene('delegation', 9, (R, T0) => {
 scene('gap', 7.5, (R, T0) => {
   const lab = A(R, 'label center-x', '<i></i>02 · The gap', 'top:110px;display:flex;justify-content:center');
   const pnl = A(R, 'panel', '', 'left:360px;top:165px;width:1200px;height:300px;padding:40px 48px');
-  A(pnl, '', `<div class="mono" style="font:700 40px JBM">PAY $12.00 → news-hub.api</div><div style="margin-top:12px;font:500 28px Inter;color:#9a9cad">item: <span style="color:#fff">“Crypto Signals Pro”</span></div>`, 'left:48px;top:40px');
-  const pass = A(pnl, 'chip mono', '✓ ALL CHECKS PASSED', 'right:48px;top:46px;font-size:22px;background:rgba(43,227,139,.14);border-color:rgba(43,227,139,.6);color:var(--green)');
+  A(pnl, '', `<div class="mono" style="font:700 40px JBM">PAY $12.00 → news-hub.api</div><div style="margin-top:12px;font:500 28px Inter;color:#7a7078">item: <span style="color:var(--ink)">“Crypto Signals Pro”</span></div>`, 'left:48px;top:40px');
+  const pass = A(pnl, 'chip mono', '✓ ALL CHECKS PASSED', 'right:48px;top:46px;font-size:22px;background:#fdecf2;border-color:rgba(20,17,20,.6);color:var(--ink)');
   const names = ['TOKEN', 'RECIPIENT', 'BUDGET', 'MERCHANT', 'TIME'];
   const cks = names.map((n, i) => A(pnl, 'chip mono', `<span class="green">✓</span> ${n}`, `left:${48 + i * 222}px;top:196px;font-size:20px;width:204px;justify-content:center`));
   const cmpL = A(R, 'panel', `<div class="label g"><i></i>You asked for</div><div class="h3" style="margin-top:18px;font-size:56px">Sports news</div>`, 'left:360px;top:505px;width:540px;height:180px;padding:34px 40px');
-  const neq = A(R, 'center-x', '≠', 'top:530px;font:900 120px/1 Inter;color:var(--red);text-shadow:0 0 40px rgba(255,59,78,.7)');
-  const cmpR = A(R, 'panel', `<div class="label r"><i></i>Agent bought</div><div class="h3 red" style="margin-top:18px;font-size:56px">Crypto signals</div>`, 'left:1020px;top:505px;width:540px;height:180px;padding:34px 40px;border-color:rgba(255,59,78,.55)');
+  const neq = A(R, 'center-x', '≠', 'top:530px;font:900 120px/1 Inter;color:var(--pk)');
+  const cmpR = A(R, 'panel', `<div class="label r"><i></i>Agent bought</div><div class="h3 red" style="margin-top:18px;font-size:56px">Crypto signals</div>`, 'left:1020px;top:505px;width:540px;height:180px;padding:34px 40px;border-color:rgba(224,98,142,.55)');
   const l1 = A(R, 'h2 center-x', "A deterministic rule can't understand what you meant.", 'top:740px;font-size:62px');
   const w1 = splitWords(l1);
   const l2 = A(R, 'body center-x', `This gap doesn't close with one more rule. <b class="grad" style="font-weight:800">It takes judgment.</b>`, 'top:850px;font-size:40px');
   names.forEach((_, i) => ev('check', T0 + .55 + i * .18));
   ev('success', T0 + 1.55);
-  glitch(T0 + 2.75, .45); shake(T0 + 2.75, 12, .4);
+  glitch(T0 + 2.75, .45); shake(T0 + 2.75, 4, .3);
   return {
     update(lt) {
       rise(lab, lt, .05);
@@ -244,7 +243,7 @@ scene('gap', 7.5, (R, T0) => {
       cks.forEach((c, i) => pop(c, lt, .5 + i * .18, .4, .5));
       pop(pass, lt, 1.5, .5, .4);
       const red = seg(lt, 2.75, 3.1);
-      pnl.style.borderColor = red > 0 ? `rgba(255,59,78,${.7 * red})` : '';
+      pnl.style.borderColor = red > 0 ? `rgba(224,98,142,${.7 * red})` : '';
       rise(cmpL, lt, 2.2, .5, 40); rise(cmpR, lt, 2.4, .5, 40); pop(neq, lt, 2.7, .4, .2);
       revealWords(w1, lt, 3.5, .06, .5, 40);
       rise(l2, lt, 5.0, .6, 30);
@@ -255,7 +254,7 @@ scene('gap', 7.5, (R, T0) => {
 /* ───────────────────────── 6. GENLAYER / GENVM ───────────────────────── */
 scene('genvm', 7, (R, T0) => {
   const lab = A(R, 'label v', '<i></i>03 · Enter GenLayer', 'left:120px;top:112px');
-  const win = A(R, 'panel vi-edge', `<div class="win-bar"><b style="background:#ff5f57"></b><b style="background:#febc2e"></b><b style="background:#28c840"></b><span style="margin-left:14px">internet_court.py</span></div><div class="code"></div>`, 'left:120px;top:165px;width:1000px;height:770px;overflow:hidden');
+  const win = A(R, 'panel vi-edge', `<div class="win-bar"><b style="background:#eadde3"></b><b style="background:#eadde3"></b><b style="background:#eadde3"></b><span style="margin-left:14px">internet_court.py</span></div><div class="code"></div>`, 'left:120px;top:165px;width:1000px;height:770px;overflow:hidden');
   const code = `class InternetCourt(gl.Contract):
 
     @gl.public.write
@@ -298,15 +297,15 @@ scene('equivalence', 5.5, (R, T0) => {
   const title = A(R, 'h2 center-x', 'Consensus on <span class="grad-vi">meaning</span>, not on exact text.', 'top:160px;font-size:66px');
   const outs = ['Off-scope purchase. Revoke the delegation.', 'Not sports news → revoke.', 'Intent violated. Recommend: revoke.', 'Bought crypto signals. Revoke it.', 'Revoke — breaks the user’s intent.'];
   const CW = 330, GAP = 22, L0 = (W - (5 * CW + 4 * GAP)) / 2;
-  const cards = outs.map((o, i) => A(R, 'panel vi-edge', `<div style="display:flex;justify-content:space-between" class="mono"><span style="font:700 18px JBM;letter-spacing:.14em;color:#b8adff">VALIDATOR ${i + 1}</span><span style="font:700 16px JBM;color:#6f7186">LLM·${'ABCDE'[i]}</span></div><div class="q" style="margin-top:20px;font:500 28px/1.32 Inter;color:#e9e9f4;height:120px"></div><div class="ok chip mono" style="position:absolute;left:24px;bottom:22px;font-size:18px;background:rgba(43,227,139,.14);border-color:rgba(43,227,139,.5);color:var(--green)">≈ REVOKE</div>`,
+  const cards = outs.map((o, i) => A(R, 'panel vi-edge', `<div style="display:flex;justify-content:space-between" class="mono"><span style="font:700 18px JBM;letter-spacing:.14em;color:#e0628e">VALIDATOR ${i + 1}</span><span style="font:700 16px JBM;color:#7a7078">LLM·${'ABCDE'[i]}</span></div><div class="q" style="margin-top:20px;font:500 28px/1.32 Inter;color:#141114;height:120px"></div><div class="ok chip mono" style="position:absolute;left:24px;bottom:22px;font-size:18px;background:#fdecf2;border-color:rgba(20,17,20,.5);color:var(--ink)">≈ REVOKE</div>`,
     `left:${L0 + i * (CW + GAP)}px;top:330px;width:${CW}px;height:290px;padding:26px 24px`));
   const tys = cards.map((c, i) => typer($(c, '.q'), outs[i], T0 + .55 + i * .1, 30 + i * 3, { seed: 40 + i, sound: i % 2 === 0, vol: .5, caretEnd: T0 + 3.2 }));
-  const svg = el('div', 'abs', `<svg width="1920" height="1080" style="position:absolute;left:0;top:0"><defs><linearGradient id="eqg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#8b7cff"/><stop offset="1" stop-color="#2be38b"/></linearGradient></defs>${outs.map((_, i) => {
-    const x = L0 + i * (CW + GAP) + CW / 2; return `<path d="M${x} 625 C ${x} 720, 960 690, 960 790" stroke="url(#eqg)" stroke-width="3" fill="none" stroke-dasharray="400" stroke-dashoffset="400" style="filter:drop-shadow(0 0 6px #8b7cff)"/>`;
+  const svg = el('div', 'abs', `<svg width="1920" height="1080" style="position:absolute;left:0;top:0"><defs><linearGradient id="eqg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#e0628e"/><stop offset="1" stop-color="#141114"/></linearGradient></defs>${outs.map((_, i) => {
+    const x = L0 + i * (CW + GAP) + CW / 2; return `<path d="M${x} 625 C ${x} 720, 960 690, 960 790" stroke="url(#eqg)" stroke-width="3" fill="none" stroke-dasharray="400" stroke-dashoffset="400" />`;
   }).join('')}</svg>`, R);
   svg.style.cssText = 'left:0;top:0';
   const paths = $$(svg, 'path');
-  const pill = A(R, 'chip', '<span class="check" style="width:46px;height:46px">✓</span>&nbsp;CONSENSUS&nbsp;·&nbsp;<span class="green">REVOKE</span>', 'left:0;right:0;margin:auto;width:520px;justify-content:center;top:795px;font:800 34px Inter;padding:20px 30px;border-color:rgba(43,227,139,.55);background:rgba(10,40,26,.85)');
+  const pill = A(R, 'chip', '<span class="check" style="width:46px;height:46px">✓</span>&nbsp;CONSENSUS&nbsp;·&nbsp;<span class="green">REVOKE</span>', 'left:0;right:0;margin:auto;width:520px;justify-content:center;top:795px;font:800 34px Inter;padding:20px 30px;border-color:rgba(20,17,20,.55);background:#ffffff');
   cards.forEach((_, i) => ev('check', T0 + 2.9 + i * .08));
   impact(T0 + 3.75, .55);
   return {
@@ -327,18 +326,18 @@ scene('jury', 9, (R, T0) => {
   const title = A(R, 'h2', 'How does the<br><span class="grad-vi">jury</span> work?', 'left:120px;top:160px;font-size:64px');
   const pool = Array.from({ length: 64 }, (_, i) => {
     const a = (i / 64) * Math.PI * 2 - Math.PI / 2;
-    return A(R, '', '', `left:${CX + Math.cos(a) * RR - 6}px;top:${CY + Math.sin(a) * RR * .82 - 6}px;width:12px;height:12px;border-radius:50%;background:#8b7cff`);
+    return A(R, '', '', `left:${CX + Math.cos(a) * RR - 6}px;top:${CY + Math.sin(a) * RR * .82 - 6}px;width:12px;height:12px;border-radius:50%;background:#e0628e`);
   });
   const picks = [7, 20, 33, 46, 59];
   const pos = i => { const a = -Math.PI / 2 + i * (Math.PI * 2 / 5); return [CX + Math.cos(a) * RP, CY + Math.sin(a) * RP]; };
-  const svg = el('div', 'abs', `<svg width="1920" height="1080">${[0, 1, 2, 3, 4].map(() => '<line stroke="#ffa04d" stroke-width="3" stroke-linecap="round" style="filter:drop-shadow(0 0 8px #ff6b1a)"/>').join('')}${[0, 1, 2, 3, 4].map(() => '<circle r="9" fill="#fff" style="filter:drop-shadow(0 0 10px #ffa04d)"/>').join('')}</svg>`, R);
+  const svg = el('div', 'abs', `<svg width="1920" height="1080">${[0, 1, 2, 3, 4].map(() => '<line stroke="#141114" stroke-width="3" stroke-linecap="round" />').join('')}${[0, 1, 2, 3, 4].map(() => '<circle r="9" fill="#141114" />').join('')}</svg>`, R);
   svg.style.cssText = 'left:0;top:0';
   const lines = $$(svg, 'line'), packets = $$(svg, 'circle');
   const nodes = [0, 1, 2, 3, 4].map(i => { const [x, y] = pos(i); return A(R, 'node', `<div class="n">V${i + 1}</div><div class="m">LLM·${'ABCDE'[i]}</div>`, `left:${x}px;top:${y}px`); });
-  const crown = A(R, 'chip mono', '★ LEADER', 'font-size:17px;padding:8px 14px;background:rgba(255,107,26,.2);border-color:var(--or);color:#ffd1b0;margin-left:-62px');
+  const crown = A(R, 'chip mono', '★ LEADER', 'font-size:17px;padding:8px 14px;background:rgba(20,17,20,.2);border-color:var(--ink);color:#141114;margin-left:-62px');
   const votes = [0, 1, 2, 3, 4].map(() => A(R, 'vote', ''));
   const status = ['5 validators · picked at random · each runs its own LLM', 'The leader proposes · the other four vote independently', 'No majority → the leader rotates · the round repeats', 'Majority reached ✓'];
-  const st = status.map((s, i) => A(R, 'mono center-x', s, `top:965px;font:700 30px JBM;color:${i === 2 ? 'var(--red)' : i === 3 ? 'var(--green)' : '#d8d9e6'}`));
+  const st = status.map((s, i) => A(R, 'mono center-x', s, `top:965px;font:700 30px JBM;color:${i === 2 ? 'var(--pk)' : i === 3 ? 'var(--ink)' : '#141114'}`));
   const R1 = { lead: 0, at: 2.8, votes: [1, 0, 0, 1] }, R2 = { lead: 1, at: 5.0, votes: [1, 1, 0, 1] };
   for (const r of [R1, R2]) {
     ev('beam', T0 + r.at + .2);
@@ -375,8 +374,8 @@ scene('jury', 9, (R, T0) => {
       } else { crown.style.left = lx + 'px'; crown.style.top = ly - 108 + 'px'; }
       nodes.forEach((n, i) => {
         const lead = i === r.lead && lt >= r.at;
-        n.style.borderColor = lead ? '#ff6b1a' : 'rgba(139,124,255,.55)';
-        n.style.boxShadow = lead ? '0 0 60px rgba(255,107,26,.55)' : '0 0 40px rgba(139,124,255,.25)';
+        n.style.borderColor = lead ? '#141114' : 'rgba(224,98,142,.55)';
+        n.style.boxShadow = lead ? '0 12px 40px rgba(20,17,20,.25)' : '0 10px 30px rgba(80,30,50,.08)';
       });
       const ot = others(r.lead);
       lines.forEach((l, k) => {
@@ -396,8 +395,8 @@ scene('jury', 9, (R, T0) => {
         v.style.left = x + Math.cos(a) * 92 + 'px'; v.style.top = y + Math.sin(a) * 92 + 'px';
         const ok = r.votes[k];
         v.textContent = ok ? '✓' : '✕';
-        v.style.background = ok ? 'var(--green)' : 'var(--red)'; v.style.color = ok ? '#03140b' : '#fff';
-        v.style.boxShadow = `0 0 30px ${ok ? 'rgba(43,227,139,.6)' : 'rgba(255,59,78,.6)'}`;
+        v.style.background = ok ? 'var(--ink)' : 'var(--pk)'; v.style.color = ok ? '#ffffff' : '#ffffff';
+        v.style.boxShadow = '0 8px 20px rgba(80,30,50,.15)';
         const p = pop(v, lt, r.at + .9 + k * .2, .35, .2);
         if (r === R1 && lt > R2.at - .3) set(v, { o: 1 - seg(lt, R2.at - .3, R2.at), s: 1 });
       });
@@ -419,15 +418,15 @@ function hash2(a, b) { const r = rng(a * 7919 + b * 104729 + 1); r(); return r()
 scene('finality', 8, (R, T0) => {
   const lab = A(R, 'label v', '<i></i>05 · Finality & appeals', 'left:120px;top:150px');
   const timer = A(R, 'mono', '30:00', 'left:112px;top:190px;font:800 176px/1 JBM;letter-spacing:-.04em');
-  const tl = A(R, 'mono', 'FINALITY WINDOW', 'left:124px;top:376px;font:700 20px JBM;letter-spacing:.22em;color:#8d8fa2');
-  const b1 = A(R, 'body', 'Anyone can appeal by <b style="color:#fff">staking more gas.</b><br>Each appeal roughly doubles the jury: <b class="vi">2n + 1</b>.', 'left:120px;top:440px;width:860px;font-size:32px');
+  const tl = A(R, 'mono', 'FINALITY WINDOW', 'left:124px;top:376px;font:700 20px JBM;letter-spacing:.22em;color:#7a7078');
+  const b1 = A(R, 'body', 'Anyone can appeal by <b style="color:var(--ink)">staking more gas.</b><br>Each appeal roughly doubles the jury: <b class="vi">2n + 1</b>.', 'left:120px;top:440px;width:860px;font-size:32px');
   const btn = A(R, 'btn', '<span>⚖&nbsp; APPEAL&nbsp;·&nbsp;stake ↑ gas</span>', 'left:120px;top:610px;width:480px;height:92px');
-  const cj = A(R, '', `<div class="label v"><i></i>Condorcet Jury Theorem</div><div class="body" style="margin-top:18px;font-size:32px;width:820px">A group of independent voters is <b style="color:#fff">more accurate than any one of them.</b></div>`, 'left:120px;top:780px');
+  const cj = A(R, '', `<div class="label v"><i></i>Condorcet Jury Theorem</div><div class="body" style="margin-top:18px;font-size:32px;width:820px">A group of independent voters is <b style="color:var(--ink)">more accurate than any one of them.</b></div>`, 'left:120px;top:780px');
   const cv = el('canvas', 'abs', null, R); cv.width = 840; cv.height = 840; cv.style.cssText = 'left:1000px;top:120px';
   const ctx = cv.getContext('2d');
-  const cnt = A(R, 'center-x mono', '', 'left:1000px;width:840px;top:470px;font:800 120px/1 JBM;letter-spacing:-.03em;text-shadow:0 8px 40px #000,0 0 30px #000');
-  const cntL = A(R, 'center-x mono', 'VALIDATORS', 'left:1000px;width:840px;top:612px;font:700 22px JBM;letter-spacing:.24em;color:#b8adff;text-shadow:0 0 20px #000');
-  const max = A(R, 'chip mono', '◆ ALL 1,534 MAINNET VALIDATORS', 'left:1170px;top:960px;font-size:22px;border-color:rgba(139,124,255,.6);background:rgba(30,24,70,.85);color:#e0dbff');
+  const cnt = A(R, 'center-x mono', '', 'left:1000px;width:840px;top:470px;font:800 120px/1 JBM;letter-spacing:-.03em;text-shadow:0 0 24px #fbf6f8,0 0 8px #fbf6f8');
+  const cntL = A(R, 'center-x mono', 'VALIDATORS', 'left:1000px;width:840px;top:612px;font:700 22px JBM;letter-spacing:.24em;color:#e0628e;text-shadow:none');
+  const max = A(R, 'chip mono', '◆ ALL 1,534 MAINNET VALIDATORS', 'left:1170px;top:960px;font-size:22px;border-color:rgba(224,98,142,.6);background:#fdecf2;color:#141114');
   const steps = [5, 11, 23, 47, 95, 191, 383, 767, 1534];
   const clicks = [1.55, 2.1, 2.58, 3.0, 3.38, 3.72, 4.02, 4.3];
   cur(T0 + .9, 900, 1040, { show: true });
@@ -458,7 +457,7 @@ scene('finality', 8, (R, T0) => {
         const fr = k < Math.floor(n) ? 1 : n - Math.floor(n);
         const rr = 375 * Math.sqrt((k + .5) / n), a = k * ga + lt * .15;
         const x = 420 + Math.cos(a) * rr, y = 420 + Math.sin(a) * rr;
-        const hue = k % 9 === 0 ? '255,140,60' : '150,135,255';
+        const hue = k % 9 === 0 ? '20,17,20' : '224,98,142';
         ctx.fillStyle = `rgba(${hue},${.9 * fr * ap})`;
         ctx.beginPath(); ctx.arc(x, y, rad * fr, 0, Math.PI * 2); ctx.fill();
       }
@@ -470,15 +469,15 @@ scene('finality', 8, (R, T0) => {
 scene('whymm', 7.5, (R, T0) => {
   const lab = A(R, 'label', '<i></i>06 · Why MetaMask', 'left:960px;top:150px');
   const title = A(R, 'h2', 'You stay the owner.<br><span class="grad-or">The agent gets narrow authority.</span>', 'left:960px;top:196px;width:900px;font-size:60px');
-  const owner = A(R, 'panel or-edge', `<div style="display:flex;gap:18px;align-items:center;color:var(--or2)">${ICON.key}<div><div class="mono" style="font:700 20px JBM;letter-spacing:.16em">OWNER KEY</div><div style="font:600 26px Inter;color:#fff;margin-top:6px">never handed over</div></div></div>`, 'left:960px;top:380px;width:410px;height:130px;padding:30px');
-  const agent = A(R, 'panel', `<div style="display:flex;gap:18px;align-items:center;color:var(--vi2)">${ICON.bot}<div><div class="mono" style="font:700 20px JBM;letter-spacing:.16em">AI AGENT</div><div style="font:600 26px Inter;color:#fff;margin-top:6px">scoped permission</div></div></div>`, 'left:1400px;top:380px;width:410px;height:130px;padding:30px');
-  const sign = A(R, 'panel', `<div class="mono" style="font:700 20px JBM;letter-spacing:.16em;color:#8d8fa2">ERC-7710 / ERC-7715 DELEGATION</div><svg width="420" height="80" style="position:absolute;left:30px;top:66px"><path class="sig" d="M5 55 C 30 10, 50 10, 45 50 S 80 70, 95 30 S 120 5, 125 45 S 160 70, 175 35 C 185 15, 200 20, 205 50 S 250 60, 270 30 C 290 5, 300 60, 330 40 S 380 30, 410 38" stroke="#ffa04d" stroke-width="4" fill="none" stroke-linecap="round" stroke-dasharray="900" stroke-dashoffset="900" style="filter:drop-shadow(0 0 8px #ff6b1a)"/></svg>`, 'left:960px;top:540px;width:850px;height:170px;padding:30px');
+  const owner = A(R, 'panel or-edge', `<div style="display:flex;gap:18px;align-items:center;color:var(--ink)">${ICON.key}<div><div class="mono" style="font:700 20px JBM;letter-spacing:.16em">OWNER KEY</div><div style="font:600 26px Inter;color:var(--ink);margin-top:6px">never handed over</div></div></div>`, 'left:960px;top:380px;width:410px;height:130px;padding:30px');
+  const agent = A(R, 'panel', `<div style="display:flex;gap:18px;align-items:center;color:var(--pk)">${ICON.bot}<div><div class="mono" style="font:700 20px JBM;letter-spacing:.16em">AI AGENT</div><div style="font:600 26px Inter;color:var(--ink);margin-top:6px">scoped permission</div></div></div>`, 'left:1400px;top:380px;width:410px;height:130px;padding:30px');
+  const sign = A(R, 'panel', `<div class="mono" style="font:700 20px JBM;letter-spacing:.16em;color:#7a7078">ERC-7710 / ERC-7715 DELEGATION</div><svg width="420" height="80" style="position:absolute;left:30px;top:66px"><path class="sig" d="M5 55 C 30 10, 50 10, 45 50 S 80 70, 95 30 S 120 5, 125 45 S 160 70, 175 35 C 185 15, 200 20, 205 50 S 250 60, 270 30 C 290 5, 300 60, 330 40 S 380 30, 410 38" stroke="#141114" stroke-width="4" fill="none" stroke-linecap="round" stroke-dasharray="900" stroke-dashoffset="900" /></svg>`, 'left:960px;top:540px;width:850px;height:170px;padding:30px');
   const sbtn = A(sign, 'btn', 'Sign once', 'right:30px;top:46px;width:230px;height:78px');
-  const sok = A(sign, 'chip mono', '✓ SIGNED ONCE', 'right:30px;top:58px;font-size:22px;background:rgba(43,227,139,.14);border-color:rgba(43,227,139,.6);color:var(--green)');
-  const x402 = A(R, 'panel vi-edge', `<div class="mono" style="font:700 20px JBM;letter-spacing:.16em;color:#b8adff">x402 FACILITATOR · MACHINE-TO-MACHINE PAYMENTS</div>
+  const sok = A(sign, 'chip mono', '✓ SIGNED ONCE', 'right:30px;top:58px;font-size:22px;background:#fdecf2;border-color:rgba(20,17,20,.6);color:var(--ink)');
+  const x402 = A(R, 'panel vi-edge', `<div class="mono" style="font:700 20px JBM;letter-spacing:.16em;color:#e0628e">x402 FACILITATOR · MACHINE-TO-MACHINE PAYMENTS</div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:26px;font:700 24px JBM">
       <span class="chip mono" style="font-size:20px">AGENT</span><span class="v1 green">verify ✓</span><span class="v2 green">settle ✓</span><span class="chip mono" style="font-size:20px">MERCHANT</span></div>`, 'left:960px;top:740px;width:850px;height:180px;padding:30px');
-  const pk = A(x402, '', '', 'left:150px;top:112px;width:16px;height:16px;border-radius:50%;background:#b8adff;box-shadow:0 0 18px #8b7cff');
+  const pk = A(x402, '', '', 'left:150px;top:112px;width:16px;height:16px;border-radius:50%;background:#e0628e');
   const ts = T0 + 2.9;
   cur(T0 + 2.0, 1880, 1060, { show: true }); cur(ts, 1690, 625, { click: true }); cur(T0 + 3.6, 1760, 900, { hide: true });
   ev('sign', ts + .1, { d: .7 }); ev('success', ts + .85);
@@ -512,14 +511,14 @@ scene('layers', 8, (R, T0) => {
   const mk = (top, cls, img, k, txt, chip, chipCss) => A(persp, 'panel ' + cls, `
     <div style="display:flex;align-items:center;gap:28px;height:100%">
       <div style="width:92px;height:92px;border-radius:22px;display:flex;align-items:center;justify-content:center;background:#000;overflow:hidden">${img}</div>
-      <div style="flex:1"><div class="mono" style="font:700 20px JBM;letter-spacing:.18em;color:${cls === 'or-edge' ? 'var(--or2)' : 'var(--vi2)'}">${k}</div><div style="font:700 36px Inter;margin-top:10px">${txt}</div></div>
+      <div style="flex:1"><div class="mono" style="font:700 20px JBM;letter-spacing:.18em;color:${cls === 'or-edge' ? 'var(--ink)' : 'var(--pk)'}">${k}</div><div style="font:700 36px Inter;margin-top:10px">${txt}</div></div>
       <div class="chip mono res" style="${chipCss}">${chip}</div></div>`, `left:300px;top:${top}px;width:1320px;height:170px;padding:0 40px;transform-origin:50% 100%`);
-  const L1 = mk(270, 'or-edge', `<img src="${MM}" style="width:92px">`, 'LAYER 1 · METAMASK', 'Clearly outside the delegation', '✕ BLOCKED', 'font-size:24px;background:rgba(60,8,14,.9);border-color:var(--red);color:#ffb3bb');
-  const L2 = mk(480, 'vi-edge', `<img src="${GL}" style="width:70px;filter:invert(1)">`, 'LAYER 2 · GENLAYER', 'Inside the delegation, but questionable', '⚖ REVIEWED · signed evidence', 'font-size:22px;background:rgba(30,24,70,.9);border-color:var(--vi);color:#e0dbff');
+  const L1 = mk(270, 'or-edge', `<img src="${MM}" style="width:92px">`, 'LAYER 1 · METAMASK', 'Clearly outside the delegation', '✕ BLOCKED', 'font-size:24px;background:#fdecf2;border-color:var(--pk);color:#141114');
+  const L2 = mk(480, 'vi-edge', `<img src="${GL}" style="width:70px;filter:invert(1)">`, 'LAYER 2 · GENLAYER', 'Inside the delegation, but questionable', '⚖ REVIEWED · signed evidence', 'font-size:22px;background:#fdecf2;border-color:var(--pk);color:#141114');
   const vl = A(R, 'label center-x', 'The verdict is one of four', 'top:720px;display:flex;justify-content:center');
-  const V = [['CONTINUE', '#2be38b'], ['CONSTRAIN', '#ffc53d'], ['REVOKE', '#ff3b4e'], ['ESCALATE', '#8b7cff']];
+  const V = [['CONTINUE', '#141114'], ['CONSTRAIN', '#7a7078'], ['REVOKE', '#e0628e'], ['ESCALATE', '#141114']];
   const VW = 330, VG = 26, VX = (W - (4 * VW + 3 * VG)) / 2, VY = 775;
-  const vs = V.map(([n, c], i) => A(R, 'chip mono', n, `left:${VX + i * (VW + VG)}px;top:${VY}px;width:${VW}px;height:96px;justify-content:center;font:800 30px JBM;letter-spacing:.08em;color:${c};border:2px solid ${c}55;background:rgba(14,14,20,.9)`));
+  const vs = V.map(([n, c], i) => A(R, 'chip mono', n, `left:${VX + i * (VW + VG)}px;top:${VY}px;width:${VW}px;height:96px;justify-content:center;font:800 30px JBM;letter-spacing:.08em;color:${c};border:2px solid ${c}55;background:#ffffff`));
   ev('stamp', T0 + 1.45, { v: .6 }); ev('beam', T0 + 2.9);
   V.forEach((_, i) => ev('pop', T0 + 3.5 + i * .12));
   cur(T0 + 4.1, 1800, 1060, { show: true });
@@ -539,10 +538,10 @@ scene('layers', 8, (R, T0) => {
       });
       // packets: red one bounces off layer 1, amber passes into layer 2
       const d0 = dots[0], p0 = seg(lt, .9, 1.45), b0 = seg(lt, 1.45, 2.0);
-      d0.style.background = '#ff3b4e'; d0.style.boxShadow = '0 0 20px #ff3b4e';
+      d0.style.background = '#e0628e'; 
       set(d0, { o: p0 > 0 && b0 < 1 ? 1 : 0, x: 760 - b0 * 120, y: lerp(210, 345, E.inCubic(p0)) - Math.sin(b0 * Math.PI) * 120 + b0 * 40 });
       const d1 = dots[1], p1 = seg(lt, 2.2, 2.9);
-      d1.style.background = '#ffc53d'; d1.style.boxShadow = '0 0 20px #ffc53d';
+      d1.style.background = '#f7cada'; 
       set(d1, { o: p1 > 0 && lt < 3.4 ? 1 : 0, x: 1100, y: lerp(210, 560, E.inOutCubic(p1)) });
       hide(dots[2]);
       rise(vl, lt, 3.3);
@@ -552,9 +551,9 @@ scene('layers', 8, (R, T0) => {
         const pp = seg(lt, 3.5 + i * .12, 3.95 + i * .12);
         const chosen = i === 2 && lt > 6.57;
         set(v, { o: clamp(pp * 3), s: lerp(.5, 1, E.outBack(pp, 2)) * (hov ? 1.07 : 1) * (chosen ? 1.08 : 1), y: hov ? -6 : 0 });
-        v.style.background = chosen ? '#ff3b4e' : hov ? 'rgba(40,40,56,.95)' : 'rgba(14,14,20,.9)';
-        v.style.color = chosen ? '#fff' : V[i][1];
-        v.style.boxShadow = chosen ? '0 0 60px rgba(255,59,78,.7)' : hov ? `0 0 40px ${V[i][1]}55` : 'none';
+        v.style.background = chosen ? '#e0628e' : hov ? '#fdecf2' : '#ffffff';
+        v.style.color = chosen ? '#ffffff' : V[i][1];
+        v.style.boxShadow = chosen ? '0 16px 40px rgba(224,98,142,.35)' : hov ? '0 12px 30px rgba(80,30,50,.12)' : '0 6px 18px rgba(80,30,50,.06)';
       });
     },
   };
@@ -564,7 +563,7 @@ scene('layers', 8, (R, T0) => {
 scene('example', 9.5, (R, T0) => {
   const lab = A(R, 'label', '<i></i>08 · A real example', 'left:120px;top:96px');
   const title = A(R, 'h3', 'Scope: <span class="grad-or">sports-news services only.</span>', 'left:120px;top:140px;font-size:50px');
-  const term = A(R, 'panel', `<div class="win-bar"><b style="background:#ff5f57"></b><b style="background:#febc2e"></b><b style="background:#28c840"></b><span style="margin-left:14px">agent.log</span></div><div class="term"></div>`, 'left:120px;top:230px;width:1050px;height:690px');
+  const term = A(R, 'panel', `<div class="win-bar"><b style="background:#eadde3"></b><b style="background:#eadde3"></b><b style="background:#eadde3"></b><span style="margin-left:14px">agent.log</span></div><div class="term"></div>`, 'left:120px;top:230px;width:1050px;height:690px');
   const tb = $(term, '.term');
   const L = [];
   const cmd = (t, s, cps = 44) => { const d = el('div', '', '', tb); L.push({ d, ty: typer(d, s, T0 + t, cps, { seed: L.length + 60, highlight: x => `<span class="p">$</span>${esc(x.slice(1))}`, vol: .7 }) }); return L.at(-1).ty.end - T0; };
@@ -573,19 +572,19 @@ scene('example', 9.5, (R, T0) => {
   out(e + .2, '<span class="ok">  ✓ settled · within delegation</span>');
   e = cmd(e + .55, '$ agent.pay("news-hub.api", "Crypto Signals Pro", 12.00)');
   out(e + .2, '<span class="ok">  ✓ settled · still within budget</span>');
-  out(e + .65, '<span style="color:var(--amber)">  ⚠ not sports news → flagged to Internet Court</span>', 'deny');
+  out(e + .65, '<span style="color:var(--pk)">  ⚠ not sports news → flagged to Internet Court</span>', 'deny');
   const tFlag = e + .65;
   out(5.65, '<span class="bad">  ⛔ verdict: REVOKE · delegation revoked onchain</span>', null);
   e = cmd(6.15, '$ agent.pay("news-hub.api", "Crypto Signals Pro", 12.00)');
   const tRej = e + .25;
   out(tRej - 0, '<span class="bad">  ✕ REJECTED before funds move</span>', 'deny');
-  shake(T0 + tRej, 10, .35);
+  shake(T0 + tRej, 4, .3);
   glitch(T0 + tFlag, .25, false);
   // court card
   const court = A(R, 'panel vi-edge', `<div style="display:flex;align-items:center;gap:16px"><img src="${IC}" style="width:50px;border-radius:12px"><span class="mono" style="font:800 24px JBM;letter-spacing:.14em">INTERNET COURT</span></div>
-    <div class="rev mono" style="margin-top:34px;font:500 22px JBM;color:#b8adff">reviewing signed evidence<span class="dots"></span></div>
-    <div class="jur" style="display:flex;gap:16px;margin-top:22px">${'<i style="width:26px;height:26px;border-radius:50%;background:#2a2547;border:2px solid #8b7cff;display:inline-block"></i>'.repeat(5)}</div>
-    <div class="ver" style="margin-top:34px"><div class="mono" style="font:700 20px JBM;letter-spacing:.2em;color:#8d8fa2">VERDICT · FINALIZED</div><div style="font:900 96px/1 'Inter Display';color:var(--red);letter-spacing:-.02em;margin-top:12px;text-shadow:0 0 40px rgba(255,59,78,.5)">REVOKE</div></div>
+    <div class="rev mono" style="margin-top:34px;font:500 22px JBM;color:#e0628e">reviewing signed evidence<span class="dots"></span></div>
+    <div class="jur" style="display:flex;gap:16px;margin-top:22px">${'<i style="width:26px;height:26px;border-radius:50%;background:#f3e6ec;border:2px solid #e0628e;display:inline-block"></i>'.repeat(5)}</div>
+    <div class="ver" style="margin-top:34px"><div class="mono" style="font:700 20px JBM;letter-spacing:.2em;color:#7a7078">VERDICT · FINALIZED</div><div style="font:900 96px/1 'Inter Display';color:var(--pk);letter-spacing:-.02em;margin-top:12px;text-shadow:0 0 40px rgba(224,98,142,.5)">REVOKE</div></div>
     <div class="safe" style="position:absolute;left:36px;right:36px;bottom:34px;display:grid;gap:14px">
       <div class="chip" style="font-size:24px;justify-content:space-between"><span>Account</span><span class="green">✓ still yours</span></div>
       <div class="chip" style="font-size:24px;justify-content:space-between"><span>Remaining balance</span><span class="green">✓ $34.00 safe</span></div></div>`, 'left:1220px;top:230px;width:580px;height:690px;padding:36px');
@@ -603,7 +602,7 @@ scene('example', 9.5, (R, T0) => {
       const cp = ease(lt, tC, tC + .5); set(court, { o: cp, x: (1 - cp) * 80 });
       $(court, '.dots').textContent = '.'.repeat(1 + Math.floor(lt * 4) % 3);
       $(court, '.rev').style.opacity = lt < tV ? 1 : .35;
-      $$(court, '.jur i').forEach((d, i) => { const on = lt > tC + .5 + i * .18; d.style.background = on ? (lt > tV ? '#ff3b4e' : '#8b7cff') : '#2a2547'; d.style.boxShadow = on ? `0 0 16px ${lt > tV ? '#ff3b4e' : '#8b7cff'}` : 'none'; });
+      $$(court, '.jur i').forEach((d, i) => { const on = lt > tC + .5 + i * .18; d.style.background = on ? (lt > tV ? '#e0628e' : '#141114') : '#f3e6ec';  });
       const vp = seg(lt, tV, tV + .35); set($(court, '.ver'), { o: clamp(vp * 3), s: lerp(1.8, 1, E.outBack(vp, 1.2)) });
       rise($(court, '.safe'), lt, tRej + .4, .5, 30);
     },
@@ -612,11 +611,11 @@ scene('example', 9.5, (R, T0) => {
 // pre-register court-dots sound
 /* ───────────────────────── 13. CAVEAT ───────────────────────── */
 scene('caveat', 5, (R, T0) => {
-  const lab = A(R, 'label center-x', '<i style="background:var(--amber);box-shadow:0 0 14px var(--amber)"></i>One honest caveat', 'top:240px;display:flex;justify-content:center');
+  const lab = A(R, 'label center-x', '<i style="background:var(--pk)"></i>One honest caveat', 'top:240px;display:flex;justify-content:center');
   const b = A(R, 'body center-x', 'A verdict doesn’t reverse a payment that already settled —<br>unless it also ran through a separate escrow or refund mechanism.', 'top:300px;font-size:36px');
   const wb = splitWords(b);
   const l1 = A(R, 'h1 center-x', 'Internet Court stops the <span class="grad">next</span> mistake.', 'top:530px;font-size:104px');
-  const l2 = A(R, 'h1 center-x', 'Not the last one.', 'top:660px;font-size:104px;color:#4d4f60');
+  const l2 = A(R, 'h1 center-x', 'Not the last one.', 'top:660px;font-size:104px;color:#d9cfd6');
   ev('tick', T0 + 1.9); ev('tick', T0 + 2.9);
   return {
     update(lt) {
@@ -628,27 +627,27 @@ scene('caveat', 5, (R, T0) => {
 
 /* ───────────────────────── 14. SLA ESCROW ───────────────────────── */
 scene('sla', 7.5, (R, T0) => {
-  const lab = A(R, 'label', '<i style="background:var(--amber);box-shadow:0 0 14px var(--amber)"></i>In progress · SLA escrow', 'left:120px;top:110px');
+  const lab = A(R, 'label', '<i style="background:var(--pk)"></i>In progress · SLA escrow', 'left:120px;top:110px');
   const title = A(R, 'h2', 'An agent pays for <span class="grad-vi">AI inference.</span>', 'left:120px;top:152px;font-size:64px');
-  const terms = A(R, 'panel', `<div class="mono" style="font:700 20px JBM;letter-spacing:.18em;color:#8d8fa2">SLA TERMS</div>
-    <div style="margin-top:26px;font:600 34px Inter;display:flex;justify-content:space-between"><span>Successful responses</span><span class="mono" style="color:#fff">≥ 99.5%</span></div>
-    <div style="margin-top:20px;font:600 34px Inter;display:flex;justify-content:space-between"><span>p95 latency</span><span class="mono" style="color:#fff">&lt; 800 ms</span></div>`, 'left:120px;top:280px;width:700px;height:240px;padding:34px 38px');
-  const logs = A(R, 'panel', `<div class="mono" style="font:700 20px JBM;letter-spacing:.18em;color:#8d8fa2">SIGNED LOGS</div><div class="ls" style="position:absolute;left:38px;right:30px;top:80px;bottom:20px;overflow:hidden;font:400 21px/1.75 JBM;color:#9fa1b5"></div>`, 'left:120px;top:550px;width:700px;height:380px;padding:30px 38px');
+  const terms = A(R, 'panel', `<div class="mono" style="font:700 20px JBM;letter-spacing:.18em;color:#7a7078">SLA TERMS</div>
+    <div style="margin-top:26px;font:600 34px Inter;display:flex;justify-content:space-between"><span>Successful responses</span><span class="mono" style="color:var(--ink)">≥ 99.5%</span></div>
+    <div style="margin-top:20px;font:600 34px Inter;display:flex;justify-content:space-between"><span>p95 latency</span><span class="mono" style="color:var(--ink)">&lt; 800 ms</span></div>`, 'left:120px;top:280px;width:700px;height:240px;padding:34px 38px');
+  const logs = A(R, 'panel', `<div class="mono" style="font:700 20px JBM;letter-spacing:.18em;color:#7a7078">SIGNED LOGS</div><div class="ls" style="position:absolute;left:38px;right:30px;top:80px;bottom:20px;overflow:hidden;font:400 21px/1.75 JBM;color:#7a7078"></div>`, 'left:120px;top:550px;width:700px;height:380px;padding:30px 38px');
   const ls = $(logs, '.ls'), lr = rng(77);
-  const LOG = Array.from({ length: 80 }, (_, i) => { const ok = lr() > .03, ms = Math.floor(280 + lr() ** 2 * 700); return `req#${48213 + i}  <span style="color:${ok ? 'var(--green)' : 'var(--red)'}">${ok ? 200 : 503}</span>  ${String(ms).padStart(3, ' ')}ms  <span style="color:#6f7186">sig 0x${Math.floor(lr() * 0xffff).toString(16).padStart(4, '0')}…</span>`; });
-  const vault = A(R, 'panel vi-edge', `<div class="lk" style="color:#d6d0ff;margin-top:20px">${ICON.lock}</div><div class="mono" style="margin-top:22px;font:700 20px JBM;letter-spacing:.22em;color:#b8adff">IN ESCROW</div><div style="font:800 52px Inter;margin-top:8px">$500.00</div>`, 'left:880px;top:280px;width:440px;height:450px;padding:30px;text-align:center');
-  const _unused = (top, name, val, pct, thr) => A(R, '', `<div style="display:flex;justify-content:space-between;font:600 26px Inter"><span>${name}</span><span class="mono v" style="color:#fff">${val}</span></div>
-     <div style="position:relative;margin-top:16px;height:16px;border-radius:9px;background:rgba(255,255,255,.08)"><div class="f" style="height:100%;width:0;border-radius:9px;background:linear-gradient(90deg,#8b7cff,#2be38b);box-shadow:0 0 18px #2be38b"></div><div style="position:absolute;left:${thr}%;top:-8px;width:3px;height:32px;background:#fff;opacity:.7"></div></div>
+  const LOG = Array.from({ length: 80 }, (_, i) => { const ok = lr() > .03, ms = Math.floor(280 + lr() ** 2 * 700); return `req#${48213 + i}  <span style="color:${ok ? 'var(--ink)' : 'var(--pk)'}">${ok ? 200 : 503}</span>  ${String(ms).padStart(3, ' ')}ms  <span style="color:#7a7078">sig 0x${Math.floor(lr() * 0xffff).toString(16).padStart(4, '0')}…</span>`; });
+  const vault = A(R, 'panel vi-edge', `<div class="lk" style="color:#e0628e;margin-top:20px">${ICON.lock}</div><div class="mono" style="margin-top:22px;font:700 20px JBM;letter-spacing:.22em;color:#e0628e">IN ESCROW</div><div style="font:800 52px Inter;margin-top:8px">$500.00</div>`, 'left:880px;top:280px;width:440px;height:450px;padding:30px;text-align:center');
+  const _unused = (top, name, val, pct, thr) => A(R, '', `<div style="display:flex;justify-content:space-between;font:600 26px Inter"><span>${name}</span><span class="mono v" style="color:var(--ink)">${val}</span></div>
+     <div style="position:relative;margin-top:16px;height:16px;border-radius:9px;background:rgba(20,17,20,.07)"><div class="f" style="height:100%;width:0;border-radius:9px;background:linear-gradient(90deg,#e0628e,#141114)"></div><div style="position:absolute;left:${thr}%;top:-8px;width:3px;height:32px;background:#fff;opacity:.7"></div></div>
      <div class="ok mono green" style="margin-top:12px;font:700 20px JBM;letter-spacing:.14em">✓ PASS</div>`, `left:1380px;top:${top}px;width:420px`).dataset && null;
   const m1 = A(R, '', '', ''), m2 = A(R, '', '', '');
   [[m1, 300, 'Success rate', '99.71%', 'thr', 70], [m2, 500, 'p95 latency', '742 ms', 'thr', 92.75]].forEach(([m, top, n, v, , thr]) => {
     m.style.cssText = `position:absolute;left:1380px;top:${top}px;width:420px`;
-    m.innerHTML = `<div class="label v" style="font-size:18px"><i></i>Jury checks</div><div style="display:flex;justify-content:space-between;font:600 28px Inter;margin-top:18px"><span>${n}</span><span class="mono v" style="color:#fff">${v}</span></div>
-     <div style="position:relative;margin-top:16px;height:16px;border-radius:9px;background:rgba(255,255,255,.08)"><div class="f" style="height:100%;width:0;border-radius:9px;background:linear-gradient(90deg,#8b7cff,#2be38b);box-shadow:0 0 18px #2be38b"></div><div style="position:absolute;left:${thr}%;top:-8px;width:3px;height:32px;background:#fff;opacity:.8"></div></div>
+    m.innerHTML = `<div class="label v" style="font-size:18px"><i></i>Jury checks</div><div style="display:flex;justify-content:space-between;font:600 28px Inter;margin-top:18px"><span>${n}</span><span class="mono v" style="color:var(--ink)">${v}</span></div>
+     <div style="position:relative;margin-top:16px;height:16px;border-radius:9px;background:rgba(20,17,20,.07)"><div class="f" style="height:100%;width:0;border-radius:9px;background:linear-gradient(90deg,#e0628e,#141114)"></div><div style="position:absolute;left:${thr}%;top:-8px;width:3px;height:32px;background:#fff;opacity:.8"></div></div>
      <div class="ok mono green" style="margin-top:14px;font:700 20px JBM;letter-spacing:.14em">✓ WITHIN SLA</div>`;
   });
-  const o1 = A(R, 'chip', '<span class="check" style="width:40px;height:40px;font-size:22px">✓</span> SLA met → <b style="margin-left:6px">full payment</b>', 'left:880px;top:780px;font-size:30px;padding:18px 26px;border-color:rgba(43,227,139,.6);background:rgba(10,40,26,.85)');
-  const o2 = A(R, 'chip', '<span style="color:var(--amber)">◐</span> SLA missed → proportional deduction', 'left:880px;top:870px;font-size:26px;padding:16px 26px;color:#8d8fa2');
+  const o1 = A(R, 'chip', '<span class="check" style="width:40px;height:40px;font-size:22px">✓</span> SLA met → <b style="margin-left:6px">full payment</b>', 'left:880px;top:780px;font-size:30px;padding:18px 26px;border-color:rgba(20,17,20,.6);background:#ffffff');
+  const o2 = A(R, 'chip', '<span style="color:var(--pk)">◐</span> SLA missed → proportional deduction', 'left:880px;top:870px;font-size:26px;padding:16px 26px;color:#7a7078');
   ev('scan', T0 + 2.6, { d: 1.4 }); ev('check', T0 + 3.6); ev('check', T0 + 4.2);
   ev('unlock', T0 + 4.75); impact(T0 + 4.8, .5); ev('success', T0 + 4.85);
   return {
@@ -665,8 +664,8 @@ scene('sla', 7.5, (R, T0) => {
       });
       const u = ease(lt, 4.75, 5.1, E.outBack);
       $(vault, '.shackle').style.transform = `translateY(${-u * 3}px)`;
-      vault.style.borderColor = lt > 4.75 ? 'rgba(43,227,139,.7)' : '';
-      vault.style.boxShadow = lt > 4.75 ? `0 0 ${80 * (1 - seg(lt, 4.75, 6.5)) + 20}px rgba(43,227,139,.35)` : '';
+      vault.style.borderColor = lt > 4.75 ? 'rgba(20,17,20,.7)' : '';
+      vault.style.boxShadow = lt > 4.75 ? '0 30px 80px rgba(80,30,50,.16)' : '';
       pop(o1, lt, 4.85, .45, .5); rise(o2, lt, 5.2, .5, 20); o2.style.opacity = Math.min(+o2.style.opacity, .7);
     },
   };
@@ -676,9 +675,9 @@ scene('sla', 7.5, (R, T0) => {
 scene('numbers', 6, (R, T0) => {
   const lab = A(R, 'label v center-x', "<i></i>The network today · per GenLayer's public dashboard", 'top:190px;display:flex;justify-content:center');
   const D = [[326000, '~', '', 'daily transactions'], [25800, '~', '', 'daily decisions'], [1000000, '', '+', 'cumulative trustless decisions']];
-  const cols = D.map(([, pre, post, cap], i) => A(R, 'center-x', `<div class="num grad" style="font:900 112px/1.1 'Inter Display';letter-spacing:-.04em;font-variant-numeric:tabular-nums;white-space:nowrap"></div><div class="body" style="margin-top:20px;font-size:32px">${cap}</div>`, `left:${60 + i * 600}px;width:600px;top:330px;right:auto`));
-  const foot = A(R, 'mono center-x', 'Whole network — not just the MetaMask integration.', 'top:610px;font:400 26px JBM;color:#8d8fa2');
-  const svg = el('div', 'abs', `<svg width="1920" height="300"><defs><linearGradient id="spk" x1="0" x2="1"><stop offset="0" stop-color="#ff8a2a"/><stop offset=".5" stop-color="#ff4fa3"/><stop offset="1" stop-color="#8b7cff"/></linearGradient><linearGradient id="spf" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#8b7cff" stop-opacity=".3"/><stop offset="1" stop-color="#8b7cff" stop-opacity="0"/></linearGradient></defs><path class="ar" fill="url(#spf)"/><path class="ln" fill="none" stroke="url(#spk)" stroke-width="5" stroke-linejoin="round" style="filter:drop-shadow(0 0 10px #ff4fa3)"/></svg>`, R);
+  const cols = D.map(([, pre, post, cap], i) => A(R, 'center-x', `<div class="num grad" style="display:inline-block;font:900 112px/1.1 'Inter Display';letter-spacing:-.04em;font-variant-numeric:tabular-nums;white-space:nowrap"></div><div class="body" style="margin-top:20px;font-size:32px">${cap}</div>`, `left:${60 + i * 600}px;width:600px;top:330px;right:auto`));
+  const foot = A(R, 'mono center-x', 'Whole network — not just the MetaMask integration.', 'top:610px;font:400 26px JBM;color:#7a7078');
+  const svg = el('div', 'abs', `<svg width="1920" height="300"><defs><linearGradient id="spk" x1="0" x2="1"><stop offset="0" stop-color="#141114"/><stop offset=".5" stop-color="#e0628e"/><stop offset="1" stop-color="#e0628e"/></linearGradient><linearGradient id="spf" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#e0628e" stop-opacity=".3"/><stop offset="1" stop-color="#e0628e" stop-opacity="0"/></linearGradient></defs><path class="ar" fill="url(#spf)"/><path class="ln" fill="none" stroke="url(#spk)" stroke-width="5" stroke-linejoin="round" /></svg>`, R);
   svg.style.cssText = 'left:0;top:720px';
   const pr = rng(9), pts = Array.from({ length: 40 }, (_, i) => [120 + i * 43.6, 250 - (i / 39) ** 1.6 * 190 - pr() * 26]);
   const dPath = n => pts.slice(0, n).map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' ');
@@ -706,19 +705,19 @@ scene('numbers', 6, (R, T0) => {
 /* ───────────────────────── 16. ROADMAP + ERC ───────────────────────── */
 scene('roadmap', 8, (R, T0) => {
   const lab = A(R, 'label v', "<i></i>What's next", 'left:120px;top:96px');
-  const lineBg = A(R, '', '', 'left:220px;top:298px;width:1480px;height:4px;background:rgba(255,255,255,.1);border-radius:2px');
-  const line = A(R, '', '', 'left:220px;top:298px;width:1480px;height:4px;background:linear-gradient(90deg,#ff8a2a,#ff4fa3,#8b7cff);border-radius:2px;transform-origin:0 50%;box-shadow:0 0 20px #ff4fa3');
+  const lineBg = A(R, '', '', 'left:220px;top:298px;width:1480px;height:4px;background:rgba(20,17,20,.08);border-radius:2px');
+  const line = A(R, '', '', 'left:220px;top:298px;width:1480px;height:4px;background:linear-gradient(90deg,#141114,#e0628e,#e0628e);border-radius:2px;transform-origin:0 50%');
   const M = [[220, 'TODAY', 'Building in public'], [960, 'H2 2026', 'Clarke testnet phase'], [1700, 'Q4 2026', 'Mainnet target']];
-  const ms = M.map(([x, k, v], i) => A(R, 'center-x', `<div style="width:30px;height:30px;margin:0 auto;border-radius:50%;background:${i === 2 ? '#8b7cff' : '#fff'};box-shadow:0 0 30px ${i === 2 ? '#8b7cff' : '#ff8a2a'};border:5px solid #0b0b12"></div><div class="mono" style="margin-top:24px;font:800 28px JBM;letter-spacing:.08em;color:${i ? '#fff' : '#8d8fa2'}">${k}</div><div class="body" style="font-size:26px;margin-top:6px">${v}</div>`, `left:${x - 200}px;width:400px;right:auto;top:284px`));
-  const erc = A(R, '', `<div class="h3 grad" style="font-size:56px">Composable Adjudication ERC</div><div class="body" style="margin-top:16px;width:760px">Builders implement <b style="color:#fff">one interface</b> and pick their adjudicator.</div>
+  const ms = M.map(([x, k, v], i) => A(R, 'center-x', `<div style="width:30px;height:30px;margin:0 auto;border-radius:50%;background:${i === 2 ? '#e0628e' : '#141114'};border:6px solid #fbf6f8;box-shadow:0 0 0 2px ${i === 2 ? '#e0628e' : '#141114'}"></div><div class="mono" style="margin-top:24px;font:800 28px JBM;letter-spacing:.08em;color:${i ? '#141114' : '#7a7078'}">${k}</div><div class="body" style="font-size:26px;margin-top:6px">${v}</div>`, `left:${x - 200}px;width:400px;right:auto;top:284px`));
+  const erc = A(R, '', `<div class="h3 grad" style="font-size:56px">Composable Adjudication ERC</div><div class="body" style="margin-top:16px;width:760px">Builders implement <b style="color:var(--ink)">one interface</b> and pick their adjudicator.</div>
     <div class="panel code" style="position:relative;margin-top:30px;font-size:24px;width:760px;padding:24px 30px"><span class="k">interface</span> <span class="f">IAdjudicator</span> {
   <span class="k">function</span> <span class="f">adjudicate</span>(<span class="d">bytes</span> evidence)
     <span class="k">returns</span> (<span class="d">Verdict</span>);
 }</div>`, 'left:120px;top:530px');
   const ddl = A(R, 'label', 'Adjudicator', 'left:1060px;top:560px');
-  const opts = [['GenLayer', `<img src="${GL}" style="width:34px;filter:invert(1)">`], ['Kleros', '<span style="font-size:30px">⚖</span>'], ['UMA', '<span style="font-size:30px">◎</span>'], ['A group of agents', '<span style="font-size:30px">⬡</span>']];
-  const sel = A(R, 'panel', `<div class="cv" style="display:flex;align-items:center;gap:16px;font:700 32px Inter"></div><span style="position:absolute;right:28px;top:26px;font:700 28px Inter;color:#8d8fa2">▾</span>`, 'left:1060px;top:600px;width:700px;height:86px;padding:20px 28px;border-radius:18px');
-  const list = A(R, 'panel', opts.map(([n, ic], i) => `<div class="it" style="display:flex;align-items:center;gap:16px;height:76px;padding:0 24px;border-radius:12px;font:600 30px Inter">${ic}<span>${n}</span><span class="tick" style="margin-left:auto;color:var(--green);opacity:0">✓</span></div>`).join(''), 'left:1060px;top:700px;width:700px;padding:10px;border-radius:18px;transform-origin:50% 0');
+  const opts = [['GenLayer', `<img src="${GL}" style="width:34px">`], ['Kleros', '<span style="font-size:30px">⚖</span>'], ['UMA', '<span style="font-size:30px">◎</span>'], ['A group of agents', '<span style="font-size:30px">⬡</span>']];
+  const sel = A(R, 'panel', `<div class="cv" style="display:flex;align-items:center;gap:16px;font:700 32px Inter"></div><span style="position:absolute;right:28px;top:26px;font:700 28px Inter;color:#7a7078">▾</span>`, 'left:1060px;top:600px;width:700px;height:86px;padding:20px 28px;border-radius:18px');
+  const list = A(R, 'panel', opts.map(([n, ic], i) => `<div class="it" style="display:flex;align-items:center;gap:16px;height:76px;padding:0 24px;border-radius:12px;font:600 30px Inter">${ic}<span>${n}</span><span class="tick" style="margin-left:auto;color:var(--ink);opacity:0">✓</span></div>`).join(''), 'left:1060px;top:700px;width:700px;padding:10px;border-radius:18px;transform-origin:50% 0');
   const its = $$(list, '.it');
   const tOpen = T0 + 3.0, tPick = T0 + 5.5;
   cur(T0 + 2.3, 1860, 1050, { show: true }); cur(tOpen, 1500, 645, { click: true });
@@ -739,13 +738,13 @@ scene('roadmap', 8, (R, T0) => {
       set(list, { o: op, sy: lerp(.6, 1, op), sx: 1 });
       its.forEach((it, i) => {
         const hov = inside(c, 1070, 710 + i * 76, 680, 76);
-        it.style.background = hov ? 'rgba(139,124,255,.22)' : 'transparent';
+        it.style.background = hov ? 'rgba(224,98,142,.22)' : 'transparent';
         $(it, '.tick').style.opacity = i === 0 && t > tPick ? 1 : 0;
       });
       const picked = t > tPick;
-      $(sel, '.cv').innerHTML = picked ? `${opts[0][1]}<span>GenLayer</span><span class="green" style="margin-left:8px">✓</span>` : '<span style="color:#6f7186">Choose an adjudicator…</span>';
-      sel.style.borderColor = picked ? 'rgba(139,124,255,.8)' : '';
-      sel.style.boxShadow = picked ? '0 0 60px rgba(139,124,255,.35)' : '';
+      $(sel, '.cv').innerHTML = picked ? `${opts[0][1]}<span>GenLayer</span><span class="green" style="margin-left:8px">✓</span>` : '<span style="color:#7a7078">Choose an adjudicator…</span>';
+      sel.style.borderColor = picked ? 'rgba(224,98,142,.8)' : '';
+      sel.style.boxShadow = picked ? '0 20px 50px rgba(224,98,142,.2)' : '';
     },
   };
 }, { mix: .8 });
@@ -753,9 +752,9 @@ scene('roadmap', 8, (R, T0) => {
 /* ───────────────────────── 17. BEYOND PAYMENTS ───────────────────────── */
 scene('beyond', 5.5, (R, T0) => {
   const lab = A(R, 'label center-x', '<i></i>Beyond payments', 'top:150px;display:flex;justify-content:center');
-  const C = [[ICON.chart, 'Prediction-market', 'resolution', '#ff8a2a'], [ICON.doc, 'Performance-based', 'contracts', '#ff4fa3'], [ICON.shield, 'Insurance', 'claims', '#8b7cff']];
+  const C = [[ICON.chart, 'Prediction-market', 'resolution', '#141114'], [ICON.doc, 'Performance-based', 'contracts', '#e0628e'], [ICON.shield, 'Insurance', 'claims', '#e0628e']];
   const persp = A(R, '', '', 'left:0;top:0;width:1920px;height:1080px;perspective:1400px');
-  const cards = C.map(([ic, a, b, col], i) => A(persp, 'panel', `<div style="color:${col};filter:drop-shadow(0 0 14px ${col})">${ic}</div><div class="h3" style="margin-top:34px;font-size:44px">${a}<br><span style="color:${col}">${b}</span></div>`, `left:${180 + i * 540}px;top:230px;width:480px;height:340px;padding:44px;border-color:${col}55`));
+  const cards = C.map(([ic, a, b, col], i) => A(persp, 'panel', `<div style="color:${col}">${ic}</div><div class="h3" style="margin-top:34px;font-size:44px">${a}<br><span style="color:${col}">${b}</span></div>`, `left:${180 + i * 540}px;top:230px;width:480px;height:340px;padding:44px;border-color:${col}55`));
   const f1 = A(R, 'body center-x', 'Still early — no public transaction hashes are out yet.', 'top:660px;font-size:36px');
   const f2 = A(R, 'h2 center-x', 'But the direction is <span class="grad">clear.</span>', 'top:730px;font-size:76px');
   C.forEach((_, i) => ev('whoosh', T0 + .3 + i * .22, { v: .45 }));
@@ -771,11 +770,11 @@ scene('beyond', 5.5, (R, T0) => {
 
 /* ───────────────────────── 18. FINALE ───────────────────────── */
 scene('finale', 8.5, (R, T0) => {
-  const l1 = A(R, 'center-x', '', 'top:650px;font:800 80px/1 Inter;letter-spacing:-.03em;color:#e8e8f2');
+  const l1 = A(R, 'center-x', '', 'top:650px;font:800 80px/1 Inter;letter-spacing:-.03em;color:#141114');
   const l2 = A(R, 'h1 center-x', '', 'top:760px;font-size:124px');
   l2.innerHTML = [...'GenLayer enforces intent.'].map(ch => `<span class="w grad">${ch === ' ' ? '&nbsp;' : ch}</span>`).join('');
   const ls = $$(l2, '.w');
-  const end = A(R, 'center-x', `<span class="chip"><img src="${MM}" style="width:30px;border-radius:7px"> @MetaMask&nbsp;×&nbsp;<img src="${GL}" style="width:26px;filter:invert(1)"> @GenLayer&nbsp;·&nbsp;<img src="${IC}" style="width:30px;border-radius:7px"> Internet Court</span>&nbsp;&nbsp;<span class="chip" style="border-color:rgba(255,107,26,.5)">Read the thread 🧵</span>`, 'top:950px');
+  const end = A(R, 'center-x', `<span class="chip"><img src="${MM}" style="width:30px;border-radius:7px"> @MetaMask&nbsp;×&nbsp;<img src="${GL}" style="width:26px"> @GenLayer&nbsp;·&nbsp;<img src="${IC}" style="width:30px;border-radius:7px"> Internet Court</span>&nbsp;&nbsp;<span class="chip" style="border-color:rgba(20,17,20,.5)">Read the thread 🧵</span>`, 'top:950px');
   const ty = typer(l1, 'Code enforces limits.', T0 + 1.45, 15, { seed: 90, caretEnd: T0 + 3.35 });
   impact(T0 + 1.0, 1.1);
   impact(T0 + 3.5, 1.5);

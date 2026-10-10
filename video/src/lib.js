@@ -169,8 +169,8 @@ export const flash = (t, a = .8, d = .5, color = '255,255,255') => FLASHES.push(
 export const shake = (t, a = 14, d = .45) => SHAKES.push({ t, a, d });
 export const glitch = (t, d = .4, sound = true) => { GLITCHES.push({ t, d }); if (sound) ev('glitch', t, { d }); };
 export function impact(t, big = 1) {
-  flash(t, .55 * big, .45);
-  shake(t, 18 * big, .5);
+  flash(t, .35 * big, .4);
+  shake(t, 5 * big, .4);
   ev('impact', t, { v: big });
 }
 export function fxAt(t) {

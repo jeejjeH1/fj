@@ -34,21 +34,18 @@ def nf(n): return 440 * 2 ** ((n - 69) / 12)
 
 # ───────────────────────── SFX ─────────────────────────
 def key(v=1, space=False):
-    d = .09
-    click = bp(noise(d), 2500, 7000) * env(d, .0005, .004)
-    body = bp(noise(d), 250 if space else 400, 900 if space else 1600) * env(d, .001, .022 if space else .014)
-    tone = np.sin(2 * np.pi * rs.uniform(180, 260) * t_(d)) * env(d, .001, .02)
-    x = click * .55 + body * (1.4 if space else 1.0) + tone * .25
-    rel = np.zeros(int(.16 * SR)); r = bp(noise(.03), 2000, 6000) * env(.03, .0005, .003) * .35
-    o = int(rs.uniform(.045, .075) * SR); rel[o:o + len(r)] = r
-    rel[:len(x)] += x
-    return rel * v * rs.uniform(.7, 1.0)
+    """Tiny, soft, minimal tick."""
+    d = .025
+    f = rs.uniform(5200, 6800) * (.8 if space else 1)
+    tick = hp(noise(d), 4500) * env(d, .0003, .0016)
+    tone = np.sin(2 * np.pi * f * t_(d)) * env(d, .0003, .0022)
+    return (tick * .5 + tone * .35) * v * rs.uniform(.65, 1.0)
 
 def mouse():
-    d = .2; x = np.zeros(int(d * SR))
-    a = hp(noise(.02), 2500) * env(.02, .0002, .0018) + np.sin(2 * np.pi * 2300 * t_(.02)) * env(.02, .0002, .006) * .6
-    x[:len(a)] += a * 1.1
-    o = int(.085 * SR); x[o:o + len(a)] += a * .55
+    d = .12; x = np.zeros(int(d * SR))
+    a = hp(noise(.012), 3500) * env(.012, .0002, .0012) * .6 + np.sin(2 * np.pi * 1900 * t_(.012)) * env(.012, .0002, .003) * .45
+    x[:len(a)] += a
+    o = int(.07 * SR); x[o:o + len(a)] += a * .4
     return x
 
 def whoosh(d=.55, up=True):
@@ -140,18 +137,18 @@ def unlock():
 for e in EV:
     t, ty, v = e["t"], e["type"], e.get("v", 1)
     pan = float(rs.uniform(-.25, .25))
-    if ty == "key": add(sfx, key(v), t, pan, .8)
-    elif ty == "space": add(sfx, key(v, True), t, pan, .8)
-    elif ty == "click": add(sfx, mouse(), t, .15, .6)
+    if ty == "key": add(sfx, key(v), t, pan, .22)
+    elif ty == "space": add(sfx, key(v, True), t, pan, .18)
+    elif ty == "click": add(sfx, mouse(), t, .15, .45)
     elif ty == "hover": add(sfx, blip(2600, .03, .008), t, .1, .12)
-    elif ty == "whoosh": w = whoosh(); add(sfx, w, t - .25, 0, .32 * v); add(verb, w, t - .25, 0, .1 * v)
-    elif ty == "impact": x = impact(v); add(sfx, x, t, 0, .55); add(verb, x, t, 0, .25)
+    elif ty == "whoosh": w = whoosh(); add(sfx, w, t - .25, 0, .2 * v); add(verb, w, t - .25, 0, .1 * v)
+    elif ty == "impact": x = impact(v); add(sfx, x, t, 0, .35); add(verb, x, t, 0, .18)
     elif ty == "riser": add(sfx, riser(e["d"]), t, 0, .3)
-    elif ty == "glitch": add(sfx, glitch(e.get("d", .4)), t, 0, .55)
+    elif ty == "glitch": add(sfx, lp(glitch(e.get("d", .4)), 2500), t, 0, .18)
     elif ty == "tick": add(sfx, blip(3200, .03, .006), t, pan, .22 * v)
     elif ty == "check": x = check(); add(sfx, x, t, pan, .8); add(verb, x, t, 0, .15)
     elif ty == "success": x = success(); add(sfx, x, t, 0, .8); add(verb, x, t, 0, .3)
-    elif ty == "stamp": add(sfx, stamp(), t, 0, .7 * v); add(verb, stamp(), t, 0, .2)
+    elif ty == "stamp": add(sfx, stamp(), t, 0, .45 * v); add(verb, stamp(), t, 0, .2)
     elif ty == "pop": add(sfx, pop(e.get("n", 0)), t, pan, .7)
     elif ty == "deny": add(sfx, deny(), t, 0, .8)
     elif ty == "beam": x = beam(); add(sfx, x, t, 0, .7); add(verb, x, t, 0, .3)
@@ -264,7 +261,7 @@ for e in EV:
     if e["type"] in ("key", "space", "click"):
         i = int(e["t"] * SR); typ[i:i + int(.25 * SR)] = 1
 typ = signal.sosfiltfilt(signal.butter(1, 4, fs=SR, output="sos"), typ)
-duck *= 1 - .35 * np.clip(typ, 0, 1)
+duck *= 1 - .15 * np.clip(typ, 0, 1)
 mix = music * .45 * duck + sfx * 1.0 + wet * 1.0
 mix = hp(mix, 25)
 # fade-in/out
