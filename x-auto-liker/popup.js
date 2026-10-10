@@ -2,17 +2,17 @@ const MAX_LINKS = 30;
 
 const $ = (id) => document.getElementById(id);
 const els = {
-  links: $('links'), count: $('count'), delay: $('delay'), jitter: $('jitter'),
-  closeTab: $('closeTab'), start: $('start'), stop: $('stop'),
-  status: $('status'), progress: $('progress'), log: $('log'),
+  links: $('links'), count: $('count'), counter: $('counter'), countBar: $('countBar'), clear: $('clear'), warn: $('warn'),
+  preOut: $('preOut'), delayOut: $('delayOut'), est: $('est'), timeline: $('timeline'), closeTab: $('closeTab'),
+  start: $('start'), stop: $('stop'), back: $('back'), pill: $('pill'), pillText: $('pillText'),
+  viewSetup: $('viewSetup'), viewRun: $('viewRun'),
+  ringTotal: $('ringTotal'), ringPhase: $('ringPhase'), bigHeart: $('bigHeart'), phaseNum: $('phaseNum'), phaseLabel: $('phaseLabel'),
+  progText: $('progText'), statusText: $('statusText'), queue: $('queue'),
+  stLiked: $('stLiked'), stAlready: $('stAlready'), stError: $('stError'),
 };
 
-const RESULT_LABEL = {
-  liked: '✓ لایک شد',
-  already: '• از قبل لایک بود',
-  error: '✗ خطا',
-  pending: '…',
-};
+const fa = (n) => String(n).replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[d]);
+const secRange = (lo, hi) => (lo === hi ? `${fa(lo)} ثانیه` : `${fa(lo)} تا ${fa(hi)} ثانیه`);
 
 // Pulls tweet URLs out of free text, normalizes them to x.com and dedupes by status id.
 // Accepts status links (x.com/user/status/ID) and intent links (x.com/intent/like?tweet_id=ID),
@@ -30,83 +30,346 @@ function parseLinks(text) {
   return out;
 }
 
+/* ───────────── dual range slider ───────────── */
+function dualRange(root, onChange) {
+  const lo = root.querySelector('.lo');
+  const hi = root.querySelector('.hi');
+  const fill = root.querySelector('.fill');
+  const min = Number(lo.min);
+  const max = Number(lo.max);
+  const pct = (v) => ((v - min) / (max - min)) * 100;
+
+  function paint() {
+    fill.style.left = `${pct(Number(lo.value))}%`;
+    fill.style.right = `${100 - pct(Number(hi.value))}%`;
+    // keep the thumb you can still drag on top when both sit at the far end
+    lo.style.zIndex = Number(lo.value) >= max - 1 ? 3 : 2;
+  }
+  lo.addEventListener('input', () => {
+    if (Number(lo.value) > Number(hi.value)) hi.value = lo.value;
+    paint(); onChange();
+  });
+  hi.addEventListener('input', () => {
+    if (Number(hi.value) < Number(lo.value)) lo.value = hi.value;
+    paint(); onChange();
+  });
+  return {
+    get: () => [Number(lo.value), Number(hi.value)],
+    set: (a, b) => { lo.value = a; hi.value = b; paint(); },
+  };
+}
+
+const preRange = dualRange($('preRange'), onTimingChange);
+const delayRange = dualRange($('delayRange'), onTimingChange);
+
+/* ───────────── setup view ───────────── */
+let lastCount = -1;
 function updateCount() {
   const n = parseLinks(els.links.value).length;
-  els.count.textContent = n;
-  els.count.style.color = n > MAX_LINKS ? '#f4212e' : '';
-}
-
-function render(state) {
-  const running = !!state?.running;
-  els.start.disabled = running;
-  els.stop.disabled = !running;
-  els.links.disabled = running;
-
-  if (!state || !state.queue) return;
-  const done = state.results.length;
-  const total = state.queue.length;
-  els.progress.max = total || 1;
-  els.progress.value = done;
-  els.status.textContent = state.statusText || (running ? `در حال اجرا… ${done}/${total}` : 'آماده');
-
-  els.log.innerHTML = '';
-  state.queue.forEach((url, i) => {
-    const r = state.results[i];
-    const li = document.createElement('li');
-    const kind = r ? r.result : (running && i === done ? 'pending' : null);
-    if (kind) li.className = kind;
-    li.textContent = url.replace('https://x.com/', '') + (kind ? `  ${RESULT_LABEL[kind]}` : '') +
-      (r?.detail ? ` (${r.detail})` : '');
-    els.log.appendChild(li);
-  });
-}
-
-async function init() {
-  const { settings, runState } = await chrome.storage.local.get(['settings', 'runState']);
-  if (settings) {
-    els.links.value = settings.linksText ?? '';
-    els.delay.value = settings.delay ?? 10;
-    els.jitter.value = settings.jitter ?? 5;
-    els.closeTab.checked = settings.closeTab ?? true;
+  if (n !== lastCount) {
+    els.count.textContent = fa(n);
+    els.count.classList.remove('bump'); void els.count.offsetWidth; els.count.classList.add('bump');
+    lastCount = n;
   }
-  updateCount();
-  render(runState);
+  els.counter.classList.toggle('over', n > MAX_LINKS);
+  els.countBar.style.width = `${Math.min(100, (n / MAX_LINKS) * 100)}%`;
+  showWarn(n > MAX_LINKS ? `حداکثر ${fa(MAX_LINKS)} لینک — الان ${fa(n)} تاست.` : '');
+  updateEstimate(n);
+}
+
+function showWarn(msg) {
+  els.warn.textContent = msg;
+  els.warn.classList.toggle('show', !!msg);
+}
+
+function updateEstimate(n = parseLinks(els.links.value).length) {
+  const [pa, pb] = preRange.get();
+  const [da, db] = delayRange.get();
+  const LOAD = 3; // rough seconds for X to load a tweet
+  const total = n ? n * (LOAD + (pa + pb) / 2 + 1) + (n - 1) * ((da + db) / 2) : 0;
+  els.est.textContent = n ? `≈ ${total >= 90 ? `${fa(Math.round(total / 60))} دقیقه` : `${fa(Math.round(total))} ثانیه`}` : '—';
+}
+
+function onTimingChange() {
+  const [pa, pb] = preRange.get();
+  const [da, db] = delayRange.get();
+  els.preOut.textContent = secRange(pa, pb);
+  els.delayOut.textContent = secRange(da, db);
+  // timeline preview: segment widths follow the average times
+  els.timeline.querySelector('.seg-read').style.flexGrow = Math.max(0.6, (pa + pb) / 2);
+  els.timeline.querySelector('.seg-wait').style.flexGrow = Math.max(0.6, (da + db) / 2);
+  els.timeline.querySelector('.seg-open').style.flexGrow = 3;
+  updateEstimate();
+  saveSettings();
 }
 
 function saveSettings() {
+  const [preMin, preMax] = preRange.get();
+  const [delayMin, delayMax] = delayRange.get();
   chrome.storage.local.set({
-    settings: {
-      linksText: els.links.value,
-      delay: Number(els.delay.value),
-      jitter: Number(els.jitter.value),
-      closeTab: els.closeTab.checked,
-    },
+    settings: { linksText: els.links.value, preMin, preMax, delayMin, delayMax, closeTab: els.closeTab.checked },
   });
 }
 
 els.links.addEventListener('input', () => { updateCount(); saveSettings(); });
-[els.delay, els.jitter, els.closeTab].forEach((el) => el.addEventListener('change', saveSettings));
+els.closeTab.addEventListener('change', saveSettings);
+els.clear.addEventListener('click', () => { els.links.value = ''; updateCount(); saveSettings(); els.links.focus(); });
 
-els.start.addEventListener('click', async () => {
+els.start.addEventListener('click', async (e) => {
+  ripple(e);
   const links = parseLinks(els.links.value);
-  if (links.length === 0) {
-    els.status.textContent = 'هیچ لینک معتبری پیدا نشد.';
-    return;
-  }
-  if (links.length > MAX_LINKS) {
-    els.status.textContent = `حداکثر ${MAX_LINKS} لینک مجاز است (الان ${links.length} تاست).`;
-    return;
-  }
-  const delay = Math.max(1, Number(els.delay.value) || 1);
-  const jitter = Math.max(0, Number(els.jitter.value) || 0);
+  if (links.length === 0) return showWarn('هیچ لینک معتبری پیدا نشد.');
+  if (links.length > MAX_LINKS) return showWarn(`حداکثر ${fa(MAX_LINKS)} لینک مجاز است.`);
+  const [preMin, preMax] = preRange.get();
+  const [delayMin, delayMax] = delayRange.get();
   saveSettings();
+  const r = els.start.getBoundingClientRect();
+  burst(r.left + r.width / 2, r.top + r.height / 2, 40);
   await chrome.runtime.sendMessage({
-    type: 'start',
-    links, delayMs: delay * 1000, jitterMs: jitter * 1000, closeTab: els.closeTab.checked,
+    type: 'start', links, closeTab: els.closeTab.checked,
+    preMinMs: preMin * 1000, preMaxMs: preMax * 1000, delayMinMs: delayMin * 1000, delayMaxMs: delayMax * 1000,
   });
 });
 
-els.stop.addEventListener('click', () => chrome.runtime.sendMessage({ type: 'stop' }));
+els.stop.addEventListener('click', (e) => { ripple(e); chrome.runtime.sendMessage({ type: 'stop' }); });
+els.back.addEventListener('click', async () => {
+  const { runState } = await chrome.storage.local.get('runState');
+  chrome.storage.local.set({ runState: { ...runState, dismissed: true } });
+});
+
+/* ───────────── run view ───────────── */
+const PHASES = {
+  opening: { label: 'در حال باز کردن توییت…', color: '#ffffff', spin: true },
+  reading: { label: 'صبر قبل از لایک', color: '#2ad4ff' },
+  liking: { label: 'در حال لایک…', color: '#ff2e7e', spin: true },
+  waiting: { label: 'تا توییت بعدی', color: '#a24bff' },
+  done: { label: 'همه انجام شد!', color: '#2fe39a' },
+  stopped: { label: 'متوقف شد', color: '#ff4d5e' },
+};
+
+let state = null;
+let queueKey = '';
+let prev = { results: null, phase: null };
+
+function labelFor(url) {
+  const m = url.match(/x\.com\/([^/]+)\/status\/(\d+)/);
+  if (!m) return url;
+  const tail = `…${m[2].slice(-5)}`;
+  return m[1] === 'i' ? `tweet <i>${tail}</i>` : `@${m[1]} <i>${tail}</i>`;
+}
+
+function buildQueue(queue) {
+  els.queue.innerHTML = '';
+  queue.forEach((url, i) => {
+    const li = document.createElement('li');
+    li.style.setProperty('--i', i);
+    li.innerHTML = `<span class="idx">${fa(i + 1)}</span><span class="name">${labelFor(url)}</span><span class="ico"></span>`;
+    els.queue.appendChild(li);
+  });
+}
+
+function setCount(el, n) {
+  const txt = fa(n);
+  if (el.textContent !== txt) {
+    el.textContent = txt;
+    el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
+  }
+}
+
+function render(s) {
+  state = s;
+  const showRun = !!s && (s.running || ((s.phase === 'done' || s.phase === 'stopped') && !s.dismissed));
+  els.viewSetup.classList.toggle('is-active', !showRun);
+  els.viewRun.classList.toggle('is-active', showRun);
+  els.pill.classList.toggle('is-running', !!s?.running);
+  els.pill.classList.toggle('is-done', !!s && !s.running && s.phase === 'done');
+  els.pillText.textContent = s?.running ? 'در حال اجرا' : (s?.phase === 'done' && showRun ? 'تمام شد' : 'آماده');
+  if (!showRun || !s.queue) { prev = { results: null, phase: null }; return; }
+
+  const key = s.queue.join('|');
+  if (key !== queueKey) { queueKey = key; buildQueue(s.queue); }
+
+  const results = s.results || [];
+  const total = s.queue.length;
+  const done = results.length;
+  const finished = !s.running;
+
+  [...els.queue.children].forEach((li, i) => {
+    const r = results[i];
+    li.className = '';
+    if (r) {
+      li.classList.add('is-done', `r-${r.result}`);
+      li.querySelector('.ico').textContent = r.result === 'liked' ? '♥' : r.result === 'already' ? '✓' : '!';
+      li.title = r.detail || '';
+    } else if (!finished && i === s.index) {
+      li.classList.add('is-current');
+    }
+  });
+  if (s.phase !== prev.phase) {
+    if (finished) els.viewRun.scrollTo({ top: 0, behavior: 'smooth' });
+    else els.queue.children[s.index]?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+
+  const count = (k) => results.filter((r) => r.result === k).length;
+  setCount(els.stLiked, count('liked'));
+  setCount(els.stAlready, count('already'));
+  setCount(els.stError, count('error'));
+
+  els.ringTotal.style.strokeDashoffset = 1000 * (1 - (total ? done / total : 0));
+  els.progText.textContent = `${fa(Math.min(done + (finished ? 0 : 1), total))} از ${fa(total)}`;
+  els.statusText.textContent = finished ? s.statusText || '' : '';
+
+  const ph = PHASES[s.phase] || PHASES.opening;
+  els.phaseLabel.textContent = ph.label;
+  els.ringPhase.style.setProperty('--phase-c', ph.color);
+  els.ringPhase.classList.toggle('indeterminate', !!ph.spin);
+  els.bigHeart.classList.toggle('on', s.phase === 'waiting' || s.phase === 'done' || s.phase === 'liking');
+  els.bigHeart.classList.toggle('beating', s.phase === 'liking');
+
+  els.stop.hidden = finished;
+  els.back.hidden = !finished;
+
+  // celebrate only what happens while the popup is open
+  if (prev.results !== null && results.length > prev.results) {
+    const last = results[results.length - 1];
+    if (last.result === 'liked') heartBurst();
+  }
+  if (prev.phase && prev.phase !== 'done' && s.phase === 'done') confetti();
+  prev = { results: results.length, phase: s.phase };
+}
+
+function heartBurst() {
+  els.bigHeart.classList.remove('pop'); void els.bigHeart.offsetWidth; els.bigHeart.classList.add('pop');
+  const r = els.bigHeart.getBoundingClientRect();
+  burst(r.left + r.width / 2, r.top + r.height / 2, 46, true);
+}
+
+// per-frame countdown for the inner ring
+function tick() {
+  const s = state;
+  if (s && els.viewRun.classList.contains('is-active')) {
+    if (s.running && s.phaseEnd && (s.phase === 'reading' || s.phase === 'waiting')) {
+      const span = Math.max(1, s.phaseEnd - s.phaseStart);
+      const left = Math.max(0, s.phaseEnd - Date.now());
+      els.ringPhase.style.strokeDashoffset = 1000 * (1 - left / span);
+      els.ringPhase.classList.toggle('empty', left <= 0);
+      els.phaseNum.innerHTML = `${fa(Math.ceil(left / 1000))}<small> ث</small>`;
+    } else if (s.phase === 'done' || s.phase === 'stopped') {
+      els.ringPhase.classList.remove('empty');
+      els.ringPhase.style.strokeDashoffset = 0;
+      els.phaseNum.textContent = s.phase === 'done' ? '✓' : '■';
+    } else {
+      els.ringPhase.classList.remove('empty');
+      els.ringPhase.style.strokeDashoffset = 0;
+      els.phaseNum.textContent = '';
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+/* ───────────── motion fx (canvas particles) ───────────── */
+const fx = $('fx');
+const ctx = fx.getContext('2d');
+const particles = [];
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const COLORS = ['#ff2e7e', '#ff79b0', '#a24bff', '#2ad4ff', '#ffffff'];
+
+function sizeCanvas() {
+  const dpr = devicePixelRatio || 1;
+  fx.width = innerWidth * dpr; fx.height = innerHeight * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+sizeCanvas();
+addEventListener('resize', sizeCanvas);
+
+function heartPath(c, x, y, s) {
+  c.beginPath();
+  c.moveTo(x, y + s * 0.3);
+  c.bezierCurveTo(x, y, x - s * 0.5, y, x - s * 0.5, y + s * 0.3);
+  c.bezierCurveTo(x - s * 0.5, y + s * 0.6, x, y + s * 0.8, x, y + s);
+  c.bezierCurveTo(x, y + s * 0.8, x + s * 0.5, y + s * 0.6, x + s * 0.5, y + s * 0.3);
+  c.bezierCurveTo(x + s * 0.5, y, x, y, x, y + s * 0.3);
+  c.fill();
+}
+
+function burst(x, y, n, hearts = false) {
+  if (reduceMotion) return;
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const v = 2 + Math.random() * 5;
+    particles.push({
+      x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1.5, g: 0.12, life: 1, decay: 0.015 + Math.random() * 0.02,
+      size: hearts && i % 3 === 0 ? 8 + Math.random() * 6 : 2 + Math.random() * 3,
+      heart: hearts && i % 3 === 0, color: COLORS[(Math.random() * COLORS.length) | 0], rot: 0, vr: 0,
+    });
+  }
+  // shockwave ring
+  particles.push({ ring: true, x, y, r: 6, life: 1, decay: 0.035 });
+}
+
+function confetti() {
+  if (reduceMotion) return;
+  for (let i = 0; i < 140; i++) {
+    particles.push({
+      x: Math.random() * innerWidth, y: -10 - Math.random() * 120, vx: (Math.random() - 0.5) * 2.5, vy: 2 + Math.random() * 3,
+      g: 0.04, life: 1, decay: 0.005 + Math.random() * 0.006, size: 4 + Math.random() * 5, rect: true,
+      color: COLORS[(Math.random() * COLORS.length) | 0], rot: Math.random() * 6, vr: (Math.random() - 0.5) * 0.3,
+    });
+  }
+}
+
+function animateFx() {
+  ctx.clearRect(0, 0, innerWidth, innerHeight);
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.life -= p.decay;
+    if (p.life <= 0) { particles.splice(i, 1); continue; }
+    ctx.globalAlpha = Math.max(0, p.life);
+    if (p.ring) {
+      p.r += 4;
+      ctx.strokeStyle = '#ff2e7e'; ctx.lineWidth = 3 * p.life;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.stroke();
+      continue;
+    }
+    p.vy += p.g; p.vx *= 0.985; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+    ctx.fillStyle = p.color;
+    if (p.heart) heartPath(ctx, p.x, p.y, p.size);
+    else if (p.rect) {
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+      ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2); ctx.restore();
+    } else { ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill(); }
+  }
+  ctx.globalAlpha = 1;
+  requestAnimationFrame(animateFx);
+}
+
+function ripple(e) {
+  const btn = e.currentTarget;
+  const r = btn.getBoundingClientRect();
+  const size = Math.max(r.width, r.height);
+  const span = document.createElement('span');
+  span.className = 'ripple';
+  span.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX - r.left - size / 2}px;top:${e.clientY - r.top - size / 2}px`;
+  btn.appendChild(span);
+  setTimeout(() => span.remove(), 700);
+}
+
+/* ───────────── init ───────────── */
+async function init() {
+  const { settings = {}, runState } = await chrome.storage.local.get(['settings', 'runState']);
+  els.links.value = settings.linksText ?? '';
+  els.closeTab.checked = settings.closeTab ?? true;
+  // older versions stored a single delay + random extra
+  const dMin = settings.delayMin ?? settings.delay ?? 8;
+  const dMax = settings.delayMax ?? (settings.delay != null ? settings.delay + (settings.jitter ?? 0) : 15);
+  preRange.set(settings.preMin ?? 2, settings.preMax ?? 5);
+  delayRange.set(Math.min(dMin, 120), Math.min(dMax, 120));
+  onTimingChange();
+  updateCount();
+  render(runState);
+  requestAnimationFrame(tick);
+  requestAnimationFrame(animateFx);
+}
 
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && changes.runState) render(changes.runState.newValue);

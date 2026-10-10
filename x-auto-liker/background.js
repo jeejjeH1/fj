@@ -1,4 +1,5 @@
-// Runs the like queue: one tab, navigated to each link in turn, with a pause between likes.
+// Runs the like queue: one tab, navigated to each link in turn. For each link: open, wait the
+// user's "before like" time, like, then wait the "between likes" time before the next link.
 // Progress lives in chrome.storage.local (runState) so the popup can be closed and reopened.
 
 let currentRun = 0; // bumped on every start/stop; a loop exits once its id is stale
@@ -25,7 +26,8 @@ async function setState(patch) {
 }
 
 function summarize(results = []) {
-  const count = (kind) => results.filter((r) => r.result === kind).length;
+  const count = (kind) => String(results.filter((r) => r.result === kind).length)
+    .replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[d]);
   return `${count('liked')} لایک، ${count('already')} از قبل، ${count('error')} خطا`;
 }
 
@@ -62,7 +64,9 @@ function navigateAndWait(tabId, url, timeoutMs = 30000) {
 }
 
 // Injected into the tweet page. Must be self-contained.
-async function likeTweetInPage(statusId) {
+// action 'find': wait until the focal tweet's like button is on screen (no click).
+// action 'click': click like on the focal tweet and confirm it turned red.
+async function tweetActionInPage(statusId, action) {
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
   // The focal tweet is the article whose timestamp links to this status id.
@@ -83,6 +87,7 @@ async function likeTweetInPage(statusId) {
       if (article.querySelector('[data-testid="unlike"]')) return { result: 'already' };
       const btn = article.querySelector('[data-testid="like"]');
       if (btn) {
+        if (action === 'find') return { result: 'ready' };
         btn.click();
         for (let i = 0; i < 20; i++) {
           await sleep(250);
@@ -96,11 +101,27 @@ async function likeTweetInPage(statusId) {
   return { result: 'error', detail: 'tweet not found' };
 }
 
-async function run(links, delayMs, jitterMs, closeTab) {
+async function runInTab(tabId, statusId, action) {
+  const [inj] = await chrome.scripting.executeScript({
+    target: { tabId },
+    func: tweetActionInPage,
+    args: [statusId, action],
+  });
+  return inj?.result || { result: 'error', detail: 'no result' };
+}
+
+const randBetween = (min, max) => min + Math.floor(Math.random() * (Math.max(min, max) - min + 1));
+
+// opts: { links, preMinMs, preMaxMs, delayMinMs, delayMaxMs, closeTab }
+async function run(opts) {
+  const { links, closeTab } = opts;
   const runId = ++currentRun;
   startKeepAlive();
   await chrome.storage.local.set({
-    runState: { running: true, queue: links, results: [], statusText: '', tabId: null },
+    runState: {
+      running: true, queue: links, results: [], statusText: '', tabId: null,
+      index: 0, phase: 'opening', phaseStart: Date.now(), phaseEnd: null,
+    },
   });
 
   let tabId = null;
@@ -108,6 +129,9 @@ async function run(links, delayMs, jitterMs, closeTab) {
   let stopReason = '';
   // Once Stop is pressed (or a new run starts) this loop must not write state anymore.
   const update = (patch) => (runId === currentRun ? setState(patch) : Promise.resolve());
+  const phase = (name, index, ms = null) => update({
+    phase: name, index, phaseStart: Date.now(), phaseEnd: ms === null ? null : Date.now() + ms,
+  });
 
   try {
     const tab = await chrome.tabs.create({ url: 'about:blank', active: true });
@@ -116,19 +140,23 @@ async function run(links, delayMs, jitterMs, closeTab) {
 
     for (let i = 0; i < links.length; i++) {
       if (runId !== currentRun) return;
-      await update({ statusText: `در حال باز کردن ${i + 1} از ${links.length}…` });
+      await phase('opening', i);
 
       const url = links[i];
       const statusId = url.match(/status\/(\d+)/)[1];
       let outcome;
       try {
         await navigateAndWait(tabId, url);
-        const [inj] = await chrome.scripting.executeScript({
-          target: { tabId },
-          func: likeTweetInPage,
-          args: [statusId],
-        });
-        outcome = inj?.result || { result: 'error', detail: 'no result' };
+        outcome = await runInTab(tabId, statusId, 'find');
+        if (outcome.result === 'ready') {
+          const pre = randBetween(opts.preMinMs, opts.preMaxMs);
+          if (pre > 0) {
+            await phase('reading', i, pre);
+            if (!(await waitUnlessStopped(pre, runId))) return;
+          }
+          await phase('liking', i);
+          outcome = await runInTab(tabId, statusId, 'click');
+        }
       } catch (e) {
         outcome = { result: 'error', detail: e.message };
       }
@@ -140,8 +168,8 @@ async function run(links, delayMs, jitterMs, closeTab) {
       if (outcome.fatal) { stopReason = 'وارد حساب X نشده‌اید — اول لاگین کنید.'; break; }
 
       if (i < links.length - 1) {
-        const wait = delayMs + Math.floor(Math.random() * (jitterMs + 1));
-        await update({ statusText: `صبر ${Math.round(wait / 1000)} ثانیه تا لینک بعدی… (${i + 1}/${links.length})` });
+        const wait = randBetween(opts.delayMinMs, opts.delayMaxMs);
+        await phase('waiting', i + 1, wait);
         if (!(await waitUnlessStopped(wait, runId))) return;
       }
     }
@@ -158,19 +186,24 @@ async function run(links, delayMs, jitterMs, closeTab) {
   stopKeepAlive();
   await setState({
     running: false,
-    statusText: stopReason ? `${stopReason} — ${summary}` : `تمام شد ✓ — ${summary}`,
+    phase: stopReason ? 'stopped' : 'done',
+    phaseEnd: null,
+    statusText: stopReason ? `${stopReason} — ${summary}` : `تمام شد — ${summary}`,
   });
 }
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === 'start') {
-    run(msg.links.slice(0, 30), msg.delayMs, msg.jitterMs, msg.closeTab);
+    run({ ...msg, links: msg.links.slice(0, 30) });
     sendResponse({ ok: true });
   } else if (msg.type === 'stop') {
     currentRun++;
     stopKeepAlive();
     chrome.storage.local.get('runState').then(({ runState }) =>
-      setState({ running: false, statusText: `متوقف شد — ${summarize(runState?.results)}` }));
+      setState({
+        running: false, phase: 'stopped', phaseEnd: null,
+        statusText: `متوقف شد — ${summarize(runState?.results)}`,
+      }));
     sendResponse({ ok: true });
   }
 });

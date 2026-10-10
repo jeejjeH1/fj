@@ -3,36 +3,146 @@
 <head>
   <meta charset="utf-8">
   <title>X Auto Liker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;900&display=swap">
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <h1>X Auto Liker</h1>
+  <!-- animated aurora backdrop -->
+  <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
+  <canvas id="fx" aria-hidden="true"></canvas>
 
-  <label for="links">لینک توییت‌ها (هر خط یکی، حداکثر ۳۰ تا)</label>
-  <textarea id="links" dir="ltr" placeholder="https://x.com/user/status/1234567890"></textarea>
-  <div class="hint"><span id="count">0</span> / 30 لینک معتبر</div>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <linearGradient id="g-main" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#ff2e7e"/><stop offset=".55" stop-color="#a24bff"/><stop offset="1" stop-color="#2ad4ff"/>
+      </linearGradient>
+      <linearGradient id="g-heart" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#ff5ea0"/><stop offset="1" stop-color="#e0105e"/>
+      </linearGradient>
+      <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 21.2s-7.6-4.6-9.9-9.3C.6 8.7 2.4 4.8 6.1 4.4c2.1-.2 3.9.9 5.9 3 2-2.1 3.8-3.2 5.9-3 3.7.4 5.5 4.3 4 7.5-2.3 4.7-9.9 9.3-9.9 9.3z"/></symbol>
+    </defs>
+  </svg>
 
-  <div class="row">
-    <div>
-      <label for="delay">فاصله بین هر لایک (ثانیه)</label>
-      <input id="delay" type="number" min="1" step="1" value="10">
+  <header class="top">
+    <div class="logo">
+      <svg class="logo-heart"><use href="#i-heart" fill="url(#g-heart)"/></svg>
+      <span class="logo-ring"></span>
     </div>
-    <div>
-      <label for="jitter">تصادفی اضافه تا (ثانیه)</label>
-      <input id="jitter" type="number" min="0" step="1" value="5">
+    <div class="brand">
+      <h1>X Auto Liker</h1>
+      <p>لایک خودکار، نوبت به نوبت</p>
     </div>
-  </div>
+    <div id="pill" class="pill"><span class="dot"></span><span id="pillText">آماده</span></div>
+  </header>
 
-  <label class="check"><input id="closeTab" type="checkbox" checked> بستن تب در پایان کار</label>
+  <main class="views">
+    <!-- ───────── SETUP ───────── -->
+    <section id="viewSetup" class="view is-active">
+      <div class="card" style="--d:0">
+        <div class="card-head">
+          <h2>لینک‌ها <button id="clear" class="ghost-btn" title="پاک کردن همه">پاک کن</button></h2>
+          <div class="counter" id="counter">
+            <b id="count">۰</b><span>/ ۳۰</span>
+            <div class="counter-bar"><i id="countBar"></i></div>
+          </div>
+        </div>
+        <div class="ta-wrap">
+          <textarea id="links" dir="ltr" spellcheck="false" wrap="off"
+            placeholder="کل پیام را اینجا بچسبانید…&#10;x.com/intent/like?tweet_id=…&#10;x.com/user/status/…"></textarea>
+        </div>
+        <div id="warn" class="warn"></div>
+      </div>
 
-  <div class="buttons">
-    <button id="start">شروع</button>
-    <button id="stop" class="secondary" disabled>توقف</button>
-  </div>
+      <div class="card" style="--d:1">
+        <div class="card-head"><h2>زمان‌بندی</h2><span class="est" id="est"></span></div>
 
-  <div id="status" class="status">آماده</div>
-  <progress id="progress" value="0" max="1"></progress>
-  <ol id="log" dir="ltr"></ol>
+        <div class="setting">
+          <div class="setting-label">
+            <span class="sw sw-read"></span>
+            صبر بعد از باز شدن، قبل از لایک
+            <output id="preOut"></output>
+          </div>
+          <div class="range" id="preRange" dir="ltr" style="--c:#2ad4ff">
+            <div class="track"><div class="fill"></div></div>
+            <input type="range" class="lo" min="0" max="30" step="1" aria-label="حداقل صبر قبل از لایک">
+            <input type="range" class="hi" min="0" max="30" step="1" aria-label="حداکثر صبر قبل از لایک">
+          </div>
+        </div>
+
+        <div class="setting">
+          <div class="setting-label">
+            <span class="sw sw-wait"></span>
+            فاصله بین هر لایک
+            <output id="delayOut"></output>
+          </div>
+          <div class="range" id="delayRange" dir="ltr" style="--c:#a24bff">
+            <div class="track"><div class="fill"></div></div>
+            <input type="range" class="lo" min="1" max="120" step="1" aria-label="حداقل فاصله">
+            <input type="range" class="hi" min="1" max="120" step="1" aria-label="حداکثر فاصله">
+          </div>
+        </div>
+
+        <!-- motion preview of one cycle -->
+        <div class="timeline" id="timeline" dir="ltr" aria-hidden="true">
+          <div class="seg seg-open"><span>باز</span></div>
+          <div class="seg seg-read"><span>صبر</span></div>
+          <div class="seg seg-like"><svg><use href="#i-heart"/></svg></div>
+          <div class="seg seg-wait"><span>فاصله</span></div>
+          <div class="runner"></div>
+        </div>
+
+        <label class="toggle">
+          <input id="closeTab" type="checkbox" checked>
+          <span class="knob"></span>
+          بستن تب در پایان کار
+        </label>
+      </div>
+
+      <button id="start" class="cta" style="--d:2">
+        <span class="cta-shine"></span>
+        <svg><use href="#i-heart"/></svg>
+        <span>شروع لایک</span>
+      </button>
+    </section>
+
+    <!-- ───────── RUN ───────── -->
+    <section id="viewRun" class="view">
+      <div class="stage">
+        <svg class="rings" viewBox="0 0 220 220">
+          <circle class="r-track" cx="110" cy="110" r="100"/>
+          <circle id="ringTotal" class="r-total" cx="110" cy="110" r="100" pathLength="1000"/>
+          <circle class="r-track thin" cx="110" cy="110" r="84"/>
+          <circle id="ringPhase" class="r-phase" cx="110" cy="110" r="84" pathLength="1000"/>
+          <g class="orbit"><circle cx="110" cy="26" r="4"/></g>
+        </svg>
+        <div class="core">
+          <svg id="bigHeart" class="big-heart"><use href="#i-heart"/></svg>
+          <div id="phaseNum" class="phase-num"></div>
+          <div id="phaseLabel" class="phase-label"></div>
+        </div>
+      </div>
+
+      <div class="progress-line">
+        <span id="progText"></span>
+        <span id="statusText" class="status-text"></span>
+      </div>
+
+      <div class="stats">
+        <div class="stat s-liked"><b id="stLiked">۰</b><span>لایک شد</span></div>
+        <div class="stat s-already"><b id="stAlready">۰</b><span>از قبل</span></div>
+        <div class="stat s-error"><b id="stError">۰</b><span>خطا</span></div>
+      </div>
+
+      <ol id="queue" class="queue"></ol>
+
+      <div class="run-actions">
+        <button id="stop" class="stop-btn">توقف</button>
+        <button id="back" class="cta small" hidden><span class="cta-shine"></span><span>لیست جدید</span></button>
+      </div>
+    </section>
+  </main>
 
   <script src="popup.js"></script>
 </body>
