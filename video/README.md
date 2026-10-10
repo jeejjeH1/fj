@@ -14,6 +14,10 @@ Everything is generated from code — no stock footage:
 | Sound | `tools/audio.py` — procedural 120 BPM track (D minor) + SFX: mechanical keystrokes, mouse clicks, whooshes, impacts, risers, glitches, UI blips. All synced to `out/events.json`, exported by the timeline itself |
 | Render | `tools/render.mjs` — headless Chromium (Playwright), deterministic frame stepping, piped to ffmpeg/x264 |
 
+## Final video
+
+`video/internet_court_x.mp4` — 1920×1080, 60 fps, H.264 + AAC 320k, 2:09, ~360 MB, −14 LUFS (X/Twitter-ready: under 512 MB and 2:20). Stored with Git LFS.
+
 ## Build
 
 ```bash
