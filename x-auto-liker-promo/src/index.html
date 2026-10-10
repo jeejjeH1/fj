@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="fa">
+<head>
+<meta charset="utf-8">
+<title>X Auto Liker — promo</title>
+<style>
+@font-face { font-family: Vaz; font-weight: 400; src: url(/node_modules/@fontsource/vazirmatn/files/vazirmatn-arabic-400-normal.woff2); }
+@font-face { font-family: Vaz; font-weight: 500; src: url(/node_modules/@fontsource/vazirmatn/files/vazirmatn-arabic-500-normal.woff2); }
+@font-face { font-family: Vaz; font-weight: 700; src: url(/node_modules/@fontsource/vazirmatn/files/vazirmatn-arabic-700-normal.woff2); }
+@font-face { font-family: Vaz; font-weight: 900; src: url(/node_modules/@fontsource/vazirmatn/files/vazirmatn-arabic-900-normal.woff2); }
+@font-face { font-family: VazL; font-weight: 900; src: url(/node_modules/@fontsource/vazirmatn/files/vazirmatn-latin-900-normal.woff2); }
+@font-face { font-family: VazL; font-weight: 700; src: url(/node_modules/@fontsource/vazirmatn/files/vazirmatn-latin-700-normal.woff2); }
+:root {
+  --bg: #07060d; --text: #f4f2ff; --muted: #9a94b8;
+  --pink: #ff2e7e; --violet: #a24bff; --cyan: #2ad4ff; --green: #2fe39a; --blue: #3ea6ff;
+  --grad: linear-gradient(120deg, var(--pink), var(--violet) 55%, var(--cyan));
+  --card: rgba(255, 255, 255, .05); --card-b: rgba(255, 255, 255, .11);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--bg); }
+body { font-family: Vaz, VazL, Inter, sans-serif; color: var(--text); -webkit-font-smoothing: antialiased; }
+#root { position: absolute; inset: 0; overflow: hidden; }
+.blob { position: absolute; width: 1100px; height: 1100px; margin: -550px 0 0 -550px; border-radius: 50%; opacity: .55; }
+#grain { position: absolute; inset: 0; opacity: .05; background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 4px 4px; }
+#vign { position: absolute; inset: 0; background: radial-gradient(ellipse 75% 70% at 50% 50%, transparent 55%, rgba(0, 0, 0, .65)); }
+canvas { position: absolute; inset: 0; width: 1920px; height: 1080px; }
+.scene { position: absolute; inset: 0; will-change: transform, opacity, filter; }
+.abs { position: absolute; }
+.w { display: inline-block; white-space: pre; }
+.grad-text { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+.h1 { font: 900 104px/1.15 Vaz, VazL; letter-spacing: -1px; direction: rtl; text-align: right; }
+.h2 { font: 900 84px/1.2 Vaz, VazL; direction: rtl; text-align: right; }
+.sub { font: 500 36px/1.5 Vaz; color: var(--muted); direction: rtl; text-align: right; }
+.tag { display: inline-flex; align-items: center; gap: 14px; padding: 12px 26px; border-radius: 99px; background: var(--card); border: 1px solid var(--card-b);
+  font: 700 26px/1 Vaz, VazL; color: var(--muted); direction: rtl; }
+.tag i { width: 12px; height: 12px; border-radius: 50%; background: var(--pink); box-shadow: 0 0 14px var(--pink); }
+
+.card { position: absolute; background: rgba(255, 255, 255, .05); border: 1.5px solid var(--card-b); border-radius: 40px;
+  box-shadow: 0 40px 120px rgba(0, 0, 0, .55), inset 0 2px 0 rgba(255, 255, 255, .07); backdrop-filter: blur(20px); }
+.card-head { display: flex; justify-content: space-between; align-items: center; direction: rtl; }
+.card-title { font: 700 38px Vaz; }
+
+/* scene 1 */
+#logo { position: absolute; left: 960px; top: 430px; width: 0; height: 0; }
+#logo .tile { position: absolute; left: -130px; top: -130px; width: 260px; height: 260px; border-radius: 72px; padding: 6px; background: var(--grad);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+#logo .tileFill { position: absolute; left: -130px; top: -130px; width: 260px; height: 260px; border-radius: 72px; background: rgba(255, 255, 255, .04); }
+#logo svg { position: absolute; left: -82px; top: -82px; width: 164px; height: 164px; filter: drop-shadow(0 0 40px rgba(255, 46, 126, .8)); }
+#title { position: absolute; left: 0; right: 0; top: 610px; text-align: center; font: 900 140px/1 VazL; letter-spacing: -3px; direction: ltr; }
+#tagline { position: absolute; left: 0; right: 0; top: 790px; text-align: center; font: 500 46px/1 Vaz; color: var(--muted); direction: rtl; }
+
+/* links card */
+#linksCard { left: 150px; top: 170px; width: 800px; height: 740px; padding: 44px 48px; }
+.counter { display: flex; align-items: baseline; gap: 10px; direction: rtl; font: 700 30px VazL, Vaz; color: var(--muted); position: relative; padding-bottom: 14px; }
+.counter b { font: 900 64px/1 Vaz; color: var(--text); display: inline-block; }
+.cbar { position: absolute; bottom: 0; left: 0; right: 0; height: 8px; border-radius: 8px; background: rgba(255, 255, 255, .08); overflow: hidden; }
+.cbar i { display: block; height: 100%; width: 0; background: var(--grad); border-radius: 8px; }
+.ta { position: absolute; left: 48px; right: 48px; top: 190px; bottom: 48px; border-radius: 26px; background: rgba(0, 0, 0, .4); border: 1.5px solid var(--card-b); overflow: hidden; }
+.lines { position: absolute; left: 32px; right: 32px; top: 22px; }
+.line { height: 52px; font: 500 27px/52px "DejaVu Sans Mono", monospace; color: #d9d4f2; white-space: nowrap; direction: ltr; }
+.line span { color: #ff79b0; }
+
+/* timing card */
+#timeCard { left: 150px; top: 200px; width: 800px; height: 680px; padding: 48px 50px; }
+.set-label { display: flex; align-items: center; gap: 16px; direction: rtl; font: 500 30px Vaz; margin-bottom: 26px; }
+.set-label output { margin-right: auto; font: 900 30px Vaz; padding: 4px 18px; border-radius: 14px; background: rgba(255, 255, 255, .07); }
+.sw { width: 18px; height: 18px; border-radius: 6px; }
+.range { position: relative; height: 40px; margin-bottom: 60px; }
+.range .track { position: absolute; top: 15px; left: 0; right: 0; height: 10px; border-radius: 10px; background: rgba(255, 255, 255, .09); }
+.range .fill { position: absolute; top: 15px; height: 10px; border-radius: 10px; }
+.thumb { position: absolute; top: 2px; width: 36px; height: 36px; margin-left: -18px; border-radius: 50%; background: #fff; border: 8px solid; box-shadow: 0 6px 16px rgba(0, 0, 0, .5); }
+.timeline { position: relative; display: flex; gap: 8px; height: 62px; }
+.seg { display: grid; place-items: center; border-radius: 16px; font: 500 24px Vaz; color: rgba(255, 255, 255, .88); overflow: hidden; }
+.runner { position: absolute; top: -6px; bottom: -6px; width: 6px; border-radius: 6px; background: #fff; box-shadow: 0 0 18px #fff, 0 0 40px var(--pink); }
+
+/* run scene */
+#ringWrap { position: absolute; left: 230px; top: 150px; width: 620px; height: 620px; }
+#ringWrap svg.rings { width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
+.rings circle { fill: none; }
+#core { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+#core svg { width: 130px; height: 130px; }
+#coreNum { font: 900 96px/1.05 Vaz; direction: rtl; }
+#coreNum small { font-size: 44px; color: var(--muted); font-weight: 700; }
+#coreLabel { font: 500 32px Vaz; color: var(--muted); }
+.stats { position: absolute; left: 190px; top: 820px; width: 700px; display: flex; gap: 22px; direction: rtl; }
+.stat { flex: 1; border-radius: 28px; padding: 20px 28px; background: var(--card); border: 1.5px solid var(--card-b); position: relative; overflow: hidden; }
+.stat b { display: block; font: 900 56px/1.1 Vaz; }
+.stat span { font: 500 26px Vaz; color: var(--muted); }
+.stat::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 5px; background: var(--sc); box-shadow: 0 0 18px var(--sc); }
+#tweets { position: absolute; left: 1010px; top: 0; width: 760px; height: 1080px; }
+.tw { position: absolute; left: 0; width: 760px; height: 250px; border-radius: 36px; padding: 34px 38px; background: rgba(255, 255, 255, .055); border: 1.5px solid var(--card-b);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .45); direction: ltr; }
+.tw .av { position: absolute; left: 38px; top: 34px; width: 74px; height: 74px; border-radius: 50%; }
+.tw .nm { position: absolute; left: 132px; top: 40px; height: 22px; width: 220px; border-radius: 11px; background: rgba(255, 255, 255, .5); }
+.tw .hd { position: absolute; left: 132px; top: 76px; height: 18px; width: 150px; border-radius: 9px; background: rgba(255, 255, 255, .2); }
+.tw .l1, .tw .l2 { position: absolute; left: 38px; height: 18px; border-radius: 9px; background: rgba(255, 255, 255, .16); }
+.tw .l1 { top: 134px; width: 640px; } .tw .l2 { top: 166px; width: 470px; }
+.tw .act { position: absolute; left: 38px; bottom: 26px; display: flex; gap: 70px; align-items: center; }
+.tw .act i { width: 30px; height: 30px; border-radius: 9px; border: 3px solid rgba(255, 255, 255, .25); }
+.tw .lk { position: absolute; right: 44px; bottom: 18px; display: flex; align-items: center; gap: 12px; font: 700 28px VazL; color: rgba(255, 255, 255, .5); }
+.tw .lk svg { width: 50px; height: 50px; }
+
+#lockTag { position: absolute; left: 0; right: 0; top: 880px; text-align: center; }
+#flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="g-main" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff2e7e"/><stop offset=".55" stop-color="#a24bff"/><stop offset="1" stop-color="#2ad4ff"/></linearGradient>
+    <linearGradient id="g-heart" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff5ea0"/><stop offset="1" stop-color="#e0105e"/></linearGradient>
+    <symbol id="heart" viewBox="0 0 24 24"><path d="M12 21.2s-7.6-4.6-9.9-9.3C.6 8.7 2.4 4.8 6.1 4.4c2.1-.2 3.9.9 5.9 3 2-2.1 3.8-3.2 5.9-3 3.7.4 5.5 4.3 4 7.5-2.3 4.7-9.9 9.3-9.9 9.3z"/></symbol>
+  </defs>
+</svg>
+<div id="root">
+  <div class="blob" id="b1" style="background: radial-gradient(circle, #ff2e7e 0%, rgba(255,46,126,.35) 30%, transparent 68%)"></div>
+  <div class="blob" id="b2" style="background: radial-gradient(circle, #a24bff 0%, rgba(162,75,255,.35) 30%, transparent 68%)"></div>
+  <div class="blob" id="b3" style="background: radial-gradient(circle, #2ad4ff 0%, rgba(42,212,255,.25) 30%, transparent 66%)"></div>
+  <div id="grain"></div>
+
+  <!-- 1: logo reveal -->
+  <div class="scene" id="s1">
+    <div id="logo"><div class="tileFill"></div><div class="tile"></div><svg><use href="#heart" fill="url(#g-heart)"/></svg></div>
+    <div id="title"></div>
+    <div id="tagline"></div>
+  </div>
+
+  <!-- 2: links -->
+  <div class="scene" id="s2">
+    <div class="abs" style="right:150px; top:330px; width:820px; direction:rtl; text-align:right">
+      <div class="tag" id="s2tag"><i></i>مرحله ۱</div>
+      <div class="h1" id="s2h" style="margin-top:34px"></div>
+      <div class="sub" id="s2s" style="margin-top:24px"></div>
+    </div>
+    <div class="card" id="linksCard">
+      <div class="card-head">
+        <div class="card-title">لینک‌ها</div>
+        <div class="counter"><b id="cnt">۰</b><span>/ ۳۰</span><div class="cbar"><i id="cbar"></i></div></div>
+      </div>
+      <div class="ta"><div class="lines" id="lines"></div></div>
+    </div>
+  </div>
+
+  <!-- 3: timing -->
+  <div class="scene" id="s3">
+    <div class="abs" style="right:150px; top:330px; width:820px; direction:rtl; text-align:right">
+      <div class="tag" id="s3tag"><i style="background:var(--cyan);box-shadow:0 0 14px var(--cyan)"></i>مرحله ۲</div>
+      <div class="h1" id="s3h" style="margin-top:34px"></div>
+      <div class="sub" id="s3s" style="margin-top:24px"></div>
+    </div>
+    <div class="card" id="timeCard">
+      <div class="set-label"><span class="sw" style="background:var(--cyan);box-shadow:0 0 12px var(--cyan)"></span>صبر بعد از باز شدن، قبل از لایک<output id="o1"></output></div>
+      <div class="range" id="r1" style="--c:#2ad4ff"><div class="track"></div><div class="fill"></div><div class="thumb lo"></div><div class="thumb hi"></div></div>
+      <div class="set-label"><span class="sw" style="background:var(--violet);box-shadow:0 0 12px var(--violet)"></span>فاصله بین هر لایک<output id="o2"></output></div>
+      <div class="range" id="r2" style="--c:#a24bff"><div class="track"></div><div class="fill"></div><div class="thumb lo"></div><div class="thumb hi"></div></div>
+      <div class="timeline" id="tl">
+        <div class="seg" id="sgO" style="background:rgba(255,255,255,.09)">باز</div>
+        <div class="seg" id="sgR" style="background:rgba(42,212,255,.25);border:2px solid rgba(42,212,255,.55)">صبر</div>
+        <div class="seg" id="sgL" style="background:rgba(255,46,126,.25)"><svg style="width:34px;height:34px"><use href="#heart" fill="#ff2e7e"/></svg></div>
+        <div class="seg" id="sgW" style="background:rgba(162,75,255,.25);border:2px solid rgba(162,75,255,.55)">فاصله</div>
+        <div class="runner" id="runner"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4: auto like -->
+  <div class="scene" id="s4">
+    <div id="ringWrap">
+      <svg class="rings" viewBox="0 0 220 220">
+        <circle cx="110" cy="110" r="100" stroke="rgba(255,255,255,.07)" stroke-width="9"/>
+        <circle id="ringT" cx="110" cy="110" r="100" stroke="url(#g-main)" stroke-width="9" stroke-linecap="round" pathLength="1000" stroke-dasharray="1000" stroke-dashoffset="1000" style="filter:drop-shadow(0 0 6px rgba(255,46,126,.6))"/>
+        <circle cx="110" cy="110" r="85" stroke="rgba(255,255,255,.07)" stroke-width="4"/>
+        <circle id="ringP" cx="110" cy="110" r="85" stroke="#a24bff" stroke-width="4" stroke-linecap="round" pathLength="1000" stroke-dasharray="1000" stroke-dashoffset="0" style="filter:drop-shadow(0 0 5px #a24bff)"/>
+      </svg>
+      <div id="core"><svg id="coreHeart"><use href="#heart" fill="url(#g-heart)"/></svg><div id="coreNum"></div><div id="coreLabel">لایک شد</div></div>
+    </div>
+    <div class="stats">
+      <div class="stat" style="--sc:var(--pink)"><b id="stL" style="color:var(--pink)">۰</b><span>لایک شد</span></div>
+      <div class="stat" style="--sc:var(--blue)"><b style="color:var(--blue)">۰</b><span>از قبل</span></div>
+      <div class="stat" style="--sc:#ff4d5e"><b style="color:#ff4d5e">۰</b><span>خطا</span></div>
+    </div>
+    <div id="tweets"></div>
+    <div class="abs h2" id="s4h" style="right:0; left:0; top:28px; text-align:center"></div>
+  </div>
+
+  <!-- 5: lockup -->
+  <div class="scene" id="s5">
+    <div id="lockTag"><span class="tag" id="lt"><i></i>اکستنشن کروم · رایگان</span></div>
+  </div>
+
+  <canvas id="fx" width="1920" height="1080"></canvas>
+  <div id="vign"></div>
+  <div id="flash"></div>
+</div>
+<script type="module" src="main.js"></script>
+</body>
+</html>

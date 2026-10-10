@@ -2,3 +2,4 @@ node_modules/
 video/out/*
 !video/out/.gitkeep
 x-auto-liker.zip
+x-auto-liker-promo/out/
