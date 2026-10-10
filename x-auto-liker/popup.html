@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <title>X Auto Liker</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <h1>X Auto Liker</h1>
+
+  <label for="links">لینک توییت‌ها (هر خط یکی، حداکثر ۳۰ تا)</label>
+  <textarea id="links" dir="ltr" placeholder="https://x.com/user/status/1234567890"></textarea>
+  <div class="hint"><span id="count">0</span> / 30 لینک معتبر</div>
+
+  <div class="row">
+    <div>
+      <label for="delay">فاصله بین هر لایک (ثانیه)</label>
+      <input id="delay" type="number" min="1" step="1" value="10">
+    </div>
+    <div>
+      <label for="jitter">تصادفی اضافه تا (ثانیه)</label>
+      <input id="jitter" type="number" min="0" step="1" value="5">
+    </div>
+  </div>
+
+  <label class="check"><input id="closeTab" type="checkbox" checked> بستن تب در پایان کار</label>
+
+  <div class="buttons">
+    <button id="start">شروع</button>
+    <button id="stop" class="secondary" disabled>توقف</button>
+  </div>
+
+  <div id="status" class="status">آماده</div>
+  <progress id="progress" value="0" max="1"></progress>
+  <ol id="log" dir="ltr"></ol>
+
+  <script src="popup.js"></script>
+</body>
+</html>

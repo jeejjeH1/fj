@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "X Auto Liker",
+  "version": "1.0.0",
+  "description": "لینک‌های توییتر/X (تا ۳۰ تا) را نوبتی باز می‌کند و لایک می‌کند، با فاصله‌ی زمانی دلخواه.",
+  "permissions": ["tabs", "scripting", "storage"],
+  "host_permissions": ["https://x.com/*", "https://twitter.com/*", "https://mobile.twitter.com/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "X Auto Liker"
+  }
+}
