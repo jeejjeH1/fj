@@ -15,14 +15,17 @@ const RESULT_LABEL = {
 };
 
 // Pulls tweet URLs out of free text, normalizes them to x.com and dedupes by status id.
+// Accepts status links (x.com/user/status/ID) and intent links (x.com/intent/like?tweet_id=ID),
+// with or without https://. Intent links become x.com/i/status/ID, which X redirects to the tweet.
 function parseLinks(text) {
-  const re = /https?:\/\/(?:www\.|mobile\.)?(?:x|twitter)\.com\/([A-Za-z0-9_]+)\/status(?:es)?\/(\d+)/g;
+  const re = /(?:https?:\/\/)?(?:www\.|mobile\.)?(?:x|twitter)\.com\/(?:([A-Za-z0-9_]+)\/status(?:es)?\/(\d+)|intent\/(?:like|favorite)\?(?:[^\s]*&)?tweet_id=(\d+))/g;
   const seen = new Set();
   const out = [];
   for (const m of text.matchAll(re)) {
-    if (seen.has(m[2])) continue;
-    seen.add(m[2]);
-    out.push(`https://x.com/${m[1]}/status/${m[2]}`);
+    const id = m[2] || m[3];
+    if (seen.has(id)) continue;
+    seen.add(id);
+    out.push(m[2] ? `https://x.com/${m[1]}/status/${id}` : `https://x.com/i/status/${id}`);
   }
   return out;
 }
