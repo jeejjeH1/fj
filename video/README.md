@@ -16,7 +16,9 @@ Everything is generated from code — no stock footage:
 
 ## Final video
 
-`video/internet_court_x.mp4` — 1920×1080, 60 fps, H.264 + AAC 320k, 2:09, ~360 MB, −14 LUFS (X/Twitter-ready: under 512 MB and 2:20). Stored with Git LFS.
+`video/internet_court_x.mp4` — 1920×1080, 60 fps, H.264 (two-pass ~5.5 Mbps) + AAC 192k, 2:09, ~92 MB, −14 LUFS. Ready to upload to X (under 512 MB and 2:20).
+
+`tools/build.sh` also produces a higher-bitrate master (`out/internet_court_x.mp4`, ~360 MB) if you want maximum quality.
 
 ## Build
 
