@@ -1,0 +1,20 @@
+{
+  "name": "internet-court-video",
+  "version": "1.0.0",
+  "description": "Motion graphics video: MetaMask x GenLayer Internet Court",
+  "main": "index.js",
+  "scripts": {
+    "test": "node -e \"process.exit(0)\"",
+    "build": "tools/build.sh"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fontsource/jetbrains-mono": "^5.0.20",
+    "three": "^0.160.0"
+  },
+  "devDependencies": {
+    "playwright": "^1.56.1"
+  }
+}

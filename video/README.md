@@ -1,0 +1,25 @@
+# Internet Court — motion graphics (X / Twitter, 16:9)
+
+A ~2:09, 1920×1080 @ 60 fps motion-graphics video for the thread
+**“Your AI agent can stay inside its budget and still do the wrong thing.”**
+(MetaMask × GenLayer · Internet Court case study).
+
+Everything is generated from code — no stock footage:
+
+| Layer | How |
+|---|---|
+| 3D logos | `tools/vectorize.py` traces both PNG logos into polygon layers → Three.js `ExtrudeGeometry` (fox = layered low-poly facets, GenLayer = chrome caps with neon edges), bloom, particles, animated backdrop |
+| Motion / UI | `src/scenes.js` — 18 scenes (kinetic type, typing, UI mockups, jury simulation, appeals counter, verdicts…), every frame a pure function of time |
+| Cursor | Keyframed mouse pointer with click squash + ripple; drives hover states |
+| Sound | `tools/audio.py` — procedural 120 BPM track (D minor) + SFX: mechanical keystrokes, mouse clicks, whooshes, impacts, risers, glitches, UI blips. All synced to `out/events.json`, exported by the timeline itself |
+| Render | `tools/render.mjs` — headless Chromium (Playwright), deterministic frame stepping, piped to ffmpeg/x264 |
+
+## Build
+
+```bash
+cd video
+npm install
+pip install opencv-python-headless scipy numpy
+tools/build.sh            # -> out/internet_court_x.mp4   (FPS=30 WORKERS=4 tools/build.sh for a faster pass)
+node tools/render.mjs --stills 12,50,124   # quick frame previews in out/
+```
