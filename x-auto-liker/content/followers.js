@@ -148,9 +148,9 @@
           <input type="checkbox" ${selected.has(key) ? 'checked' : ''} style="width:17px;height:17px;accent-color:#ff2e7e">
           <img src="${XAL.esc(u.avatar)}" style="width:40px;height:40px;border-radius:50%;background:#222;object-fit:cover;flex:none" alt="">
           <div style="flex:1;min-width:0">
-            <div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;unicode-bidi:plaintext">${XAL.esc(u.name)} ${u.verified ? '<span style="color:#1d9bf0">☑</span>' : ''} ${u.locked ? '🔒' : ''}
+            <div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;unicode-bidi:plaintext;text-align:right">${XAL.esc(u.name)} ${u.verified ? '<span style="color:#1d9bf0">☑</span>' : ''} ${u.locked ? '🔒' : ''}
               <span class="muted" style="font-weight:400;direction:ltr;unicode-bidi:isolate">@${XAL.esc(u.handle)}</span></div>
-            <div class="muted" style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;unicode-bidi:plaintext">${XAL.esc(u.bio) || '—'}</div>
+            <div class="muted" style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;unicode-bidi:plaintext;text-align:right">${XAL.esc(u.bio) || '—'}</div>
           </div>
           ${u.followsYou ? '<span style="font-size:11px;color:#2fe39a;background:rgba(47,227,154,.1);padding:2px 8px;border-radius:99px">فالوبک داده</span>' : ''}
           <button title="لیست سفید: هیچ‌وقت آنفالو نشود" style="border:0;background:none;cursor:pointer;font-size:17px;opacity:${white.has(key) ? 1 : 0.3}">⭐</button>

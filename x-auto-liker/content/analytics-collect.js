@@ -50,7 +50,7 @@
       const list = [...tweets.values()].slice(0, target);
       await chrome.storage.local.set({ analytics: { handle: me, collectedAt: Date.now(), tweets: list } });
       close();
-      XAL.openPage('analytics.html');
+      XAL.openPage('pages/analytics.html');
     });
   });
 })();

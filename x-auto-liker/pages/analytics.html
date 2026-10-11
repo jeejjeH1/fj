@@ -17,7 +17,7 @@
     .charts { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 14px; }
     @media (max-width: 860px) { .charts { grid-template-columns: 1fr; } }
     .chart { position: relative; }
-    .chart svg { display: block; width: 100%; overflow: visible; }
+    .chart svg { display: block; width: 100%; overflow: visible; direction: ltr; }
     .tip { position: absolute; pointer-events: none; padding: 8px 12px; border-radius: 12px; background: #1a1630; border: 1px solid rgba(255, 255, 255, .14);
       box-shadow: 0 12px 30px rgba(0, 0, 0, .5); font-size: 12.5px; white-space: nowrap; opacity: 0; transform: translateY(4px); transition: opacity .15s, transform .15s; z-index: 3; }
     .tip.show { opacity: 1; transform: none; }

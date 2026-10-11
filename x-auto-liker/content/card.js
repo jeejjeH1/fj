@@ -73,20 +73,25 @@
     const cw = W - PAD * 2, iw = cw - IN * 2;
     const rtl = XAL.isRtlText(info.text);
     // keep @mentions, #tags and links in one left-to-right piece inside Persian lines
-    const text = rtl ? (info.text || ' ').replace(/[@#][\w\u0600-\u06FF]+|https?:\/\/\S+/g, (m) => `\u2066${m}\u2069`) : (info.text || ' ');
+    const text = rtl ? (info.text || ' ').replace(/[@#][\w\u0600-\u06FF]+|https?:\/\/\S+/g, (m) => `\u202A${m}\u202C`) : (info.text || ' ');
 
     // measure: header 120, text, photo, footer
-    let fs = opt.size === 'story' ? 66 : 58, lines;
     const photo = opt.photo ? imgs.photo : null;
     const maxCardH = H - PAD * 2 - (opt.mark ? 70 : 0);
-    let photoH = 0;
-    if (photo) photoH = Math.min(iw * (photo.height / photo.width), maxCardH * 0.42);
-    const fixedH = IN + 120 + 40 + (photo ? photoH + 40 : 0) + (opt.footer ? 90 : 0) + IN;
-    for (; fs >= 28; fs -= 2) {
-      ctx.font = `500 ${fs}px ${FONT}`;
+    const maxFs = opt.size === 'story' ? 66 : 58;
+    // Fit: prefer big text; shrink the photo before shrinking the text below 40px.
+    let fs, lines, photoH = 0, fixedH, fits = false;
+    const layout = (f, pScale) => {
+      ctx.font = `500 ${f}px ${FONT}`;
       lines = wrap(ctx, text, iw);
-      if (fixedH + lines.length * fs * 1.6 <= maxCardH) break;
+      photoH = photo ? Math.min(iw * (photo.height / photo.width), maxCardH * pScale) : 0;
+      fixedH = IN + 120 + 40 + (photo ? photoH + 40 : 0) + (opt.footer ? 90 : 0) + IN;
+      return fixedH + lines.length * f * 1.6 <= maxCardH;
+    };
+    outer: for (const [minF, pScale] of [[40, 0.42], [40, 0.3], [34, 0.22], [28, 0.16]]) {
+      for (fs = maxFs; fs >= minF; fs -= 2) if (layout(fs, pScale)) { fits = true; break outer; }
     }
+    if (!fits) { fs = 28; layout(fs, 0.16); }
     const lh = fs * 1.6;
     const maxLines = Math.max(1, Math.floor((maxCardH - fixedH) / lh));
     if (lines.length > maxLines) { lines = lines.slice(0, maxLines); lines[maxLines - 1] += ' …'; }
@@ -131,7 +136,7 @@
     let y = hy + 120 + 40 + fs;
     const lx = rtl ? cx + cw - IN : cx + IN;
     for (const l of lines) { ctx.fillText(l, lx, y); y += lh; }
-    y += -fs + 40 - (lh - fs);
+    y = hy + 160 + lines.length * lh; // bottom of the text block
 
     // photo
     if (photo) {

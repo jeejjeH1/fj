@@ -107,7 +107,7 @@
       body.querySelectorAll('#folders .chip').forEach((x) => x.classList.toggle('on', x.dataset.id === f.id));
       q('#newF').value = '';
     });
-    q('#lib').addEventListener('click', () => XAL.openPage('library.html'));
+    q('#lib').addEventListener('click', () => XAL.openPage('pages/library.html'));
     q('#save').addEventListener('click', async () => {
       const folderId = body.querySelector('#folders .chip.on')?.dataset.id || library.folders[0].id;
       const tags = q('#tags').value.split(/[,،]/).map((s) => s.trim()).filter(Boolean);
@@ -178,7 +178,7 @@
       };
       body.querySelector('#pdf').addEventListener('click', async () => {
         await chrome.storage.local.set({ threadPrint: thread });
-        XAL.openPage('thread.html');
+        XAL.openPage('pages/thread.html');
         close();
       });
       body.querySelector('#md').addEventListener('click', () => dl(md, 'md', 'text/markdown'));
