@@ -168,8 +168,9 @@ $('syncBtn').addEventListener('click', async () => {
   if (!me) { toast('اول x.com را باز کنید و وارد شوید تا حسابتان شناخته شود'); chrome.tabs.create({ url: 'https://x.com/home' }); return; }
   const type = tab === 'followers' || tab === 'unfollowed' ? 'followers' : 'following';
   await chrome.storage.local.set({ syncState: { type, state: 'running', count: 0, at: Date.now() } });
-  const t = await chrome.tabs.create({ url: `https://x.com/${me}/${type}#xal-sync-bg`, active: false });
+  const t = await chrome.tabs.create({ url: `https://x.com/${me}/${type}`, active: false });
   syncTabId = t.id;
+  await chrome.storage.local.set({ syncJob: { tabId: t.id, type, at: Date.now() } });
 });
 $('syncStop').addEventListener('click', () => { if (syncTabId) chrome.tabs.sendMessage(syncTabId, { type: 'syncStop' }).catch(() => {}); });
 

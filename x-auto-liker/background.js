@@ -403,7 +403,13 @@ chrome.tabs.onRemoved.addListener(async (tabId) => {
 chrome.commands.onCommand.addListener((cmd) => { if (cmd === 'next-link') manualNext(); });
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-  if (msg.type === 'closeSelf' && _sender.tab) {
+  if (msg.type === 'syncWho') {
+    chrome.storage.local.get('syncJob').then(({ syncJob }) => {
+      const mine = !!syncJob && _sender.tab && syncJob.tabId === _sender.tab.id && Date.now() - syncJob.at < 5 * 60e3;
+      sendResponse({ job: mine ? syncJob : null });
+    });
+    return true; // async answer
+  } else if (msg.type === 'closeSelf' && _sender.tab) {
     chrome.tabs.remove(_sender.tab.id).catch(() => {});
     sendResponse({ ok: true });
   } else if (msg.type === 'focusSelf' && _sender.tab) {

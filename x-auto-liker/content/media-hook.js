@@ -81,6 +81,7 @@
   // The last Following / Followers request the page made (address + headers), so a sync can ask for
   // the next pages exactly the way X's own page does.
   const lastReq = {};
+  const seenOps = []; // operation names of recent API calls, to tell what X is using if the list request is not found
   const headersToObj = (h) => {
     const o = {};
     if (!h) return o;
@@ -91,6 +92,8 @@
   };
   function captureReq(url, headers) {
     try {
+      const op = /\/graphql\/[^/]+\/([A-Za-z0-9_]+)/.exec(String(url))?.[1];
+      if (op && !seenOps.includes(op)) { seenOps.push(op); if (seenOps.length > 25) seenOps.shift(); }
       const m = /\/graphql\/[^/]+\/(Following|Followers)(?:\?|$)/.exec(String(url));
       if (m) lastReq[m[1].toLowerCase()] = { url: new URL(url, location.origin).href, headers: headersToObj(headers) };
     } catch { /* ignore */ }
@@ -160,7 +163,7 @@
     // wait for the page's own first request for this list
     for (let i = 0; i < 40 && !lastReq[type] && !job.stop; i++) await sleep(500);
     const req = lastReq[type];
-    if (!req) return post({ state: 'done', reason: 'no_request', users: [] });
+    if (!req) return post({ state: 'done', reason: 'no_request', users: [], seen: seenOps.slice() });
 
     const all = new Map();
     let cursor = null, idle = 0, pages = 0, reason = 'end';

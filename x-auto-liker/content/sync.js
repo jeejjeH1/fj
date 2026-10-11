@@ -1,12 +1,22 @@
-// Starts a list sync when the extension opens your Following / Followers page with #xal-sync.
-// Shows a small progress panel, saves what was read, then brings the extension's page to the front.
+// Starts a list sync in the tab the extension opened for it (the background tells us which one).
+// Reads the list, saves it, and closes the tab; the extension window shows the progress and the result.
 (() => {
   const { XAL } = window;
   const m = location.pathname.match(/^\/([A-Za-z0-9_]{1,15})\/(following|followers)\/?$/);
-  if (!m || !/^#xal-sync(-bg)?$/.test(location.hash)) return;
-  const bgMode = location.hash === '#xal-sync-bg'; // started from the extension window: no panel, closes itself
-  const type = m[2];
+  if (!m) return;
   const handle = m[1];
+  const type = m[2];
+
+  // Is this tab a sync tab? The extension records the tab; X may rewrite the address, so it is not used as a marker.
+  async function isSyncTab() {
+    if (location.hash === '#xal-sync') return { foreground: true };
+    for (let i = 0; i < 6; i++) {
+      const r = await chrome.runtime.sendMessage({ type: 'syncWho' }).catch(() => null);
+      if (r?.job) return r.job;
+      await XAL.sleep(400); // the job may be written a moment after the tab opens
+    }
+    return null;
+  }
 
   const REASONS = {
     end: ['تمام شد ✓', ''],
@@ -19,6 +29,9 @@
     no_request: ['درخواست لیست پیدا نشد', 'صفحه را رفرش کنید و دوباره از اکستنشن بزنید.'],
   };
 
+  isSyncTab().then((job) => {
+  if (!job) return;
+  const bgMode = !job.foreground; // started from the extension window: no panel, closes itself
   const label = type === 'following' ? 'دنبال‌شوندگان' : 'دنبال‌کنندگان';
   const { body, close, modal } = XAL.modal({ title: `🔄 همگام‌سازی ${label}`, onClose: () => window.postMessage({ __xal: 'syncStop' }, location.origin) });
   body.innerHTML = `
@@ -48,6 +61,7 @@
 
     const [title, detail] = REASONS[d.reason] || REASONS.error;
     const needsYou = d.reason === 'auth' || d.reason === 'no_request';
+    const seenTxt = d.seen?.length ? `درخواست‌هایی که X فرستاد: ${d.seen.join('، ')}` : 'هیچ درخواستی از X دیده نشد.';
     if (d.users.length) {
       const { followData = {} } = await chrome.storage.local.get('followData');
       const old = followData[type];
@@ -67,7 +81,7 @@
     }
     body.innerHTML = `<div style="text-align:center;padding:10px 0">
       <div style="font-size:34px;font-weight:900">${XAL.fa(d.users.length)}</div>
-      <div style="font-weight:700;margin:4px 0">${title}</div><div class="muted">${detail}</div>
+      <div style="font-weight:700;margin:4px 0">${title}</div><div class="muted">${detail}</div>${d.reason === 'no_request' ? `<div class="muted" dir="ltr" style="margin-top:10px;font-size:11px;word-break:break-all">${seenTxt}</div>` : ''}
       <div class="row" style="margin-top:16px;justify-content:center">${d.users.length ? '<button class="btn" id="open">نمایش نتایج</button>' : ''}<button class="btn ghost" id="x">بستن</button></div></div>`;
     body.querySelector('#x').addEventListener('click', close);
     const openIt = () => { XAL.openPage(`pages/following.html?tab=${type}`); close(); };
@@ -75,6 +89,8 @@
     if (d.users.length && d.reason === 'end' && !bgMode) setTimeout(openIt, 800);
   });
 
-  history.replaceState(null, '', location.pathname); // drop the #xal-sync marker so a refresh does not sync again
+  if (location.hash === '#xal-sync') history.replaceState(null, '', location.pathname);
+  chrome.storage.local.remove('syncJob'); // one job, one run
   window.postMessage({ __xal: 'syncStart', type }, location.origin);
+  });
 })();
