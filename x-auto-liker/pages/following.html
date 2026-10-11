@@ -9,13 +9,12 @@
   <style>
     .tabs.big { margin-bottom: 14px; }
     .filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0; }
-    .chip { background: #141414; }
-    .chip.on { background: rgba(255,122,47,.18); border-color: rgba(255,122,47,.6); }
-    .num { width: 84px; background: #0c0c0c; border: 1px solid var(--card-b); border-radius: 10px; padding: 7px 9px; color: #eee; font: inherit; }
-    select.sel { background: #0c0c0c; border: 1px solid var(--card-b); border-radius: 10px; padding: 7px 9px; color: #eee; font: inherit; }
+    .chip.on { background: rgba(255,46,126,.18); border-color: rgba(255,46,126,.6); }
+    .num { width: 84px; background: rgba(0,0,0,.35); border: 1px solid var(--card-b); border-radius: 10px; padding: 7px 9px; color: #eee; font: inherit; }
+    select.sel { background: rgba(0,0,0,.35); border: 1px solid var(--card-b); border-radius: 10px; padding: 7px 9px; color: #eee; font: inherit; }
     .u { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 12px; cursor: pointer; }
     .u:hover { background: rgba(255,255,255,.04); }
-    .u input[type=checkbox] { width: 17px; height: 17px; accent-color: #ff7a2f; flex: none; }
+    .u input[type=checkbox] { width: 17px; height: 17px; accent-color: #ff79b0; flex: none; }
     .u img { width: 40px; height: 40px; border-radius: 50%; background: #222; object-fit: cover; flex: none; }
     .u .main { flex: 1; min-width: 0; }
     .u .nm { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; unicode-bidi: plaintext; text-align: right; }
@@ -24,7 +23,7 @@
     .u .meta { text-align: left; font-size: 12px; color: #8a8a8a; white-space: nowrap; direction: rtl; }
     .u .meta b { color: #eee; font-size: 13px; }
     .tag2 { font-size: 11px; padding: 1px 8px; border-radius: 99px; }
-    .tag2.mut { color: #ff7a2f; background: rgba(255,122,47,.12); }
+    .tag2.mut { color: #ff79b0; background: rgba(255,46,126,.12); }
     .tag2.nb { color: #9a9a9a; background: rgba(255,255,255,.06); }
     .star { border: 0; background: none; cursor: pointer; font-size: 17px; }
     .banner { font-size: 12.5px; color: #ffd28a; background: rgba(255,173,31,.1); border: 1px solid rgba(255,173,31,.35); border-radius: 12px; padding: 9px 12px; margin: 10px 0; }
@@ -36,9 +35,18 @@
     body.embed .kpi b { font-size: 22px; }
     body.embed .hero { font-size: 26px; }
     body.embed #list { max-height: 34vh !important; }
+    body.embed header.top p { display: none; }
+    body.embed header.top { margin-bottom: 6px; }
+    body.embed .tabs.big { margin-bottom: 8px; }
+    body.embed .kpis { margin: 8px 0; gap: 8px; }
+    body.embed .kpi { padding: 9px 12px; }
+    body.embed .kpi b { font-size: 20px; }
+    body.embed .card { padding: 12px; }
+    body.embed .bar { margin-top: 8px; padding: 8px 10px; }
   </style>
 </head>
 <body>
+  <div class="aurora"><i></i><i></i></div>
   <div class="wrap">
     <header class="top">
       <div class="logo">👥</div>
@@ -57,7 +65,7 @@
     <div class="card" id="meBox" hidden style="margin-bottom:12px">
       <b>نام کاربری X شما</b>
       <p class="muted" style="font-size:12.5px;margin:4px 0 10px">اکستنشن نتوانست حسابتان را خودکار پیدا کند (در نسخه‌ی موبایل رایج است). نام کاربری یا لینک پروفایلتان را بنویسید.</p>
-      <div class="row"><input type="text" id="meInput" dir="ltr" placeholder="@username  یا  x.com/username" style="flex:1;min-width:200px;background:#0c0c0c;border:1px solid var(--card-b);border-radius:12px;padding:10px 12px;color:#eee;font:inherit"><button class="btn" id="meSave">ذخیره</button></div>
+      <div class="row"><input type="text" id="meInput" dir="ltr" placeholder="@username  یا  x.com/username" style="flex:1;min-width:200px;background:rgba(0,0,0,.35);border:1px solid var(--card-b);border-radius:12px;padding:10px 12px;color:#eee;font:inherit"><button class="btn" id="meSave">ذخیره</button></div>
     </div>
     <div class="card" id="syncBox" hidden style="margin-bottom:12px">
       <div class="row" style="justify-content:space-between">
@@ -75,19 +83,19 @@
       <div style="font-size:42px">🔄</div>
       <h2 style="margin:8px 0 4px">اول فهرست را از X بخوانید</h2>
       <p class="muted" style="max-width:520px;margin:0 auto 14px">دکمه‌ی «همگام‌سازی از X» صفحه‌ی خودتان را در X باز می‌کند و فهرست را چند حساب در هر مرحله و با مکث می‌خواند. فقط خواندن است.</p>
-      <p class="muted" style="font-size:12.5px">اتصال ندارید یا نمی‌خواهید با X ارتباط بگیرد؟ <a href="archive.html" style="color:#ff7a2f">از فایل آرشیو X</a> استفاده کنید.</p>
+      <p class="muted" style="font-size:12.5px">اتصال ندارید یا نمی‌خواهید با X ارتباط بگیرد؟ <a href="archive.html" style="color:#ff79b0">از فایل آرشیو X</a> استفاده کنید.</p>
     </section>
 
     <section id="main" hidden>
       <div class="kpis">
         <div class="card kpi"><b id="kA">۰</b><span id="kAl">دنبال می‌کنید</span></div>
-        <div class="card kpi"><b id="kB" style="color:#ff7a2f">۰</b><span id="kBl">دوطرفه</span></div>
+        <div class="card kpi"><b id="kB" style="color:#ff79b0">۰</b><span id="kBl">دوطرفه</span></div>
         <div class="card kpi"><b id="kC">۰</b><span id="kCl">فالوبک نداده‌اند</span></div>
       </div>
 
       <div id="filterBox" class="card">
         <div class="row" style="margin-bottom:6px">
-          <input type="search" id="q" placeholder="جستجو در نام، شناسه، بیو…" style="flex:1;min-width:200px;background:#0c0c0c;border:1px solid var(--card-b);border-radius:12px;padding:10px 12px;color:#eee;font:inherit">
+          <input type="search" id="q" placeholder="جستجو در نام، شناسه، بیو…" style="flex:1;min-width:200px;background:rgba(0,0,0,.35);border:1px solid var(--card-b);border-radius:12px;padding:10px 12px;color:#eee;font:inherit">
           <label class="switch" id="protectWrap"><input type="checkbox" id="protect" checked><i></i>محافظت از دوطرفه‌ها</label>
         </div>
         <div class="filters" id="chips">
@@ -112,9 +120,9 @@
         <span class="muted" style="font-size:12.5px" id="count"></span>
         <span class="row" style="gap:6px"><button class="btn ghost sm" id="all">انتخاب همه</button><button class="btn ghost sm" id="none">هیچ‌کدام</button><button class="btn ghost sm" id="copy">کپی شناسه‌ها</button><button class="btn ghost sm" id="csv">CSV</button></span>
       </div>
-      <div class="list" id="list" style="background:#0c0c0c;border:1px solid var(--card-b);max-height:52vh"></div>
+      <div class="list" id="list" style="background:rgba(0,0,0,.35);border:1px solid var(--card-b);max-height:52vh"></div>
 
-      <div class="bar" id="actions" style="background:#111;border:1px solid var(--card-b)">
+      <div class="bar" id="actions" >
         <b id="sel">۰ انتخاب‌شده</b>
         <button class="btn" id="manual" style="margin-right:auto">آنفالو دستی (یکی‌یکی)</button>
         <button class="btn ghost" id="auto">آنفالو خودکار…</button>
@@ -135,7 +143,7 @@
         <div class="kpis" style="margin:12px 0 8px">
           <div class="card kpi"><b id="runDone">۰</b><span>آنفالو شده در این اجرا</span></div>
           <div class="card kpi"><b id="runToday">۰</b><span id="runCapText">امروز از سقف</span></div>
-          <div class="card kpi"><b id="runErr" style="color:#ff7a2f">۰</b><span>خطا</span></div>
+          <div class="card kpi"><b id="runErr" style="color:#ff79b0">۰</b><span>خطا</span></div>
         </div>
         <div class="bar2"><i id="runBar"></i></div>
       </section>

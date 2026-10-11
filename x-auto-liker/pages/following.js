@@ -7,7 +7,7 @@ const $ = (id) => document.getElementById(id);
 const toast = (m) => { const t = document.createElement('div'); t.className = 'toast'; t.textContent = m; document.body.appendChild(t); setTimeout(() => t.remove(), 2600); };
 
 const embed = new URLSearchParams(location.search).has('embed');
-if (embed) document.body.classList.add('embed');
+if (embed) { document.body.classList.add('embed'); document.documentElement.classList.add('embed'); }
 let syncTabId = null;
 let data = {};          // followData from storage: { following, followers }
 let me = null;

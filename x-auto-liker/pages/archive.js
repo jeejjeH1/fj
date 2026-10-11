@@ -94,7 +94,7 @@ function draw() {
     row.className = 'row';
     row.innerHTML = `<input type="checkbox" ${selected.has(x.id) ? 'checked' : ''}>
       <span class="id">${esc(x.id)}</span>
-      <span style="margin-inline-start:auto;font-size:12px;color:${mutual ? '#ff7a2f' : '#6b6b6b'}">${mutual ? 'دوطرفه' : 'فالوبک نمی‌دهد'}</span>`;
+      <span style="margin-inline-start:auto;font-size:12px;color:${mutual ? '#ff79b0' : '#6b6b6b'}">${mutual ? 'دوطرفه' : 'فالوبک نمی‌دهد'}</span>`;
     row.querySelector('input').addEventListener('change', (e) => { e.target.checked ? selected.add(x.id) : selected.delete(x.id); updateSel(); });
     list.appendChild(row);
   });
