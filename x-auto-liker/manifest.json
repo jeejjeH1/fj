@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "X Auto Liker",
-  "version": "6.4.0",
+  "version": "6.4.1",
   "description": "جعبه‌ابزار فارسی X: لایک نوبتی، فونت فارسی، دانلود عکس و ویدیو، عکس از توییت، پوشه‌بندی، قالب متن، آمار توییت‌ها و فالوبک‌یاب با آرشیو X.",
   "permissions": [
     "tabs",
@@ -12,6 +12,8 @@
   "host_permissions": [
     "https://x.com/*",
     "https://twitter.com/*",
+    "https://api.x.com/*",
+    "https://api.twitter.com/*",
     "https://mobile.twitter.com/*",
     "https://pbs.twimg.com/*",
     "https://abs.twimg.com/*",
