@@ -26,7 +26,7 @@
   };
 
   /* ── settings ───────────────────── */
-  XAL.tools = { persianFont: true, rtlFix: true, tweetMenu: true, composer: true };
+  XAL.tools = { persianFont: true, rtlFix: true, tweetMenu: true, composer: true, translate: true };
   const listeners = [];
   XAL.onTools = (fn) => { listeners.push(fn); fn(XAL.tools); };
   chrome.storage.local.get('tools').then(({ tools }) => {

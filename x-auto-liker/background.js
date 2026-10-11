@@ -506,15 +506,49 @@ function aiParseRaw(text) {
   return lines.map((l) => { const [text, fa] = l.split(/\s*(?:\|\||\|\|\||—\s*fa:|\s-\s(?=[؀-ۿ]))\s*/); return { text: (text || '').replace(/^["“]|["”]$/g, ''), fa: fa || '' }; }).filter((x) => x.text);
 }
 
+// Models to try, best first: the chosen one, or the top of the live free list (with a built-in fallback).
+async function aiCandidates(cfg) {
+  if (cfg.model && cfg.model !== 'auto') return [cfg.model];
+  let list = [];
+  try { list = (await aiFreeModels()).slice(0, 5).map((m) => m.id); } catch { /* use the fallback */ }
+  return list.length ? list : AI_FALLBACK;
+}
+
+// Translate one tweet to Persian. Cached per tweet so reading it again costs nothing.
+async function aiTranslate({ id, text }) {
+  const { aiTransCache = {} } = await chrome.storage.local.get('aiTransCache');
+  if (id && aiTransCache[id]) return { ok: true, fa: aiTransCache[id].fa, model: aiTransCache[id].model, cached: true };
+  const cfg = await aiSettings();
+  if (!cfg.apiKey) return { ok: false, code: 'no_key', error: 'کلید OpenRouter ثبت نشده است. از «کامنت هوشمند ← تنظیمات» وارد کنید.' };
+  const prompt = `این توییت را به فارسی روان و طبیعی ترجمه کن. اسم‌ها، @منشن‌ها، هشتگ‌ها و لینک‌ها را همان‌طور نگه دار. فقط ترجمه را بنویس، بدون توضیح و بدون علامت نقل‌قول.\n\n${text}`;
+  let lastError = 'پاسخی از مدل‌ها نیامد.';
+  for (const model of await aiCandidates(cfg)) {
+    try {
+      const res = await fetch(`${OR}/chat/completions`, { method: 'POST',
+        headers: { Authorization: `Bearer ${cfg.apiKey}`, 'Content-Type': 'application/json', 'HTTP-Referer': 'https://x.com', 'X-Title': 'X Auto Liker' },
+        body: JSON.stringify({ model, temperature: 0.2, max_tokens: 1200, messages: [{ role: 'user', content: prompt }] }) });
+      if (res.status === 401 || res.status === 403) return { ok: false, code: 'auth', error: 'کلید OpenRouter معتبر نیست.' };
+      if (res.status === 402) return { ok: false, code: 'credit', error: 'اعتبار OpenRouter کافی نیست.' };
+      if (!res.ok) { lastError = `${model}: خطای ${res.status}`; continue; }
+      const data = await res.json();
+      const fa = String(data.choices?.[0]?.message?.content || '').replace(/^["“«]|["”»]$/g, '').trim();
+      if (!fa || !/[\u0600-\u06FF]/.test(fa)) { lastError = `${model}: ترجمه‌ی فارسی نداد`; continue; }
+      if (id) {
+        aiTransCache[id] = { fa, model, at: Date.now() };
+        const keys = Object.keys(aiTransCache);
+        if (keys.length > 300) for (const k of keys.sort((a, b) => aiTransCache[a].at - aiTransCache[b].at).slice(0, keys.length - 300)) delete aiTransCache[k];
+        await chrome.storage.local.set({ aiTransCache });
+      }
+      return { ok: true, fa, model };
+    } catch (e) { lastError = `${model}: ${e.message}`; }
+  }
+  return { ok: false, code: 'failed', error: lastError };
+}
+
 async function aiComments({ tweet, extra }) {
   const cfg = await aiSettings();
   if (!cfg.apiKey) return { ok: false, code: 'no_key', error: 'کلید OpenRouter ثبت نشده است. از «تنظیمات» وارد کنید.' };
-  let candidates;
-  if (cfg.model && cfg.model !== 'auto') candidates = [cfg.model];
-  else {
-    try { candidates = (await aiFreeModels()).slice(0, 5).map((m) => m.id); } catch { candidates = []; }
-    if (!candidates.length) candidates = AI_FALLBACK;
-  }
+  const candidates = await aiCandidates(cfg);
   const prompt = aiBuildPrompt(cfg, tweet, extra);
   let lastError = 'پاسخی از مدل‌ها نیامد.';
   for (const model of candidates) {
@@ -545,7 +579,10 @@ async function aiTestKey(key) {
 }
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-  if (msg.type === 'aiComments') {
+  if (msg.type === 'aiTranslate') {
+    aiTranslate(msg).then(sendResponse, (e) => sendResponse({ ok: false, code: 'failed', error: e.message }));
+    return true;
+  } else if (msg.type === 'aiComments') {
     aiComments(msg).then(sendResponse, (e) => sendResponse({ ok: false, code: 'failed', error: e.message }));
     return true;
   } else if (msg.type === 'aiModels') {

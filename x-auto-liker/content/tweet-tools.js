@@ -46,6 +46,7 @@
     const items = [];
     if (info.photos.length) items.push({ icon: '🖼', label: `دانلود ${info.photos.length > 1 ? `${XAL.fa(info.photos.length)} عکس` : 'عکس'}`, onClick: () => downloadPhotos(info) });
     if (info.hasVideo || videos.length) items.push({ icon: '🎬', label: 'دانلود ویدیو', onClick: () => downloadVideos(info) });
+    if (info.text) items.push({ icon: '🌐', label: 'ترجمه به فارسی', onClick: () => XAL.translateTweet(article) });
     if (info.text) items.push({ icon: '💬', label: 'پیشنهاد کامنت (۱۰ تا)', onClick: () => XAL.openComments(info, article) });
     items.push({ icon: '✨', label: 'ساخت عکس از توییت', onClick: () => XAL.openCard(info) });
     items.push({ icon: '✈️', label: 'اشتراک در تلگرام', onClick: () => shareTelegram(info) });

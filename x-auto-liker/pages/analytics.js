@@ -73,9 +73,17 @@ function barChart(el, rows, labelOf, tipTitle) {
   });
 }
 
+let audience = null;
+function audienceCard() {
+  const list = Object.values(audience?.people || {}).sort((a, b) => b.replies - a.replies || b.likes - a.likes).slice(0, 10);
+  if (!list.length) return `<div class="card" style="margin-top:14px"><h2>👥 مخاطبان فعال</h2><p class="muted" style="font-size:13px">هنوز داده‌ای نیست. هر وقت زیر توییت‌های خودتان را در X باز می‌کنید و جواب‌ها را می‌خوانید، اکستنشن ثبت می‌کند چه کسانی جواب داده‌اند. هیچ درخواستی به X فرستاده نمی‌شود.</p></div>`;
+  const max = list[0].replies;
+  return `<div class="card" style="margin-top:14px"><h2>👥 مخاطبان فعال</h2><p class="muted" style="font-size:12px;margin-bottom:8px">بر اساس جواب‌هایی که زیر توییت‌های خودتان دیده‌اید · ${fa(Object.keys(audience.people).length)} نفر ثبت شده</p>${list.map((p, i) => `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06)"><span style="width:22px;color:var(--muted)">${fa(i + 1)}</span><img src="${esc(p.avatar)}" style="width:34px;height:34px;border-radius:50%;background:#222" alt=""><div style="flex:1;min-width:0"><a href="https://x.com/${esc(p.handle)}" target="_blank" style="font-weight:700;text-decoration:none">${esc(p.name || p.handle)}</a> <span class="muted" dir="ltr" style="font-size:12px">@${esc(p.handle)}</span></div><div style="width:90px;height:6px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden"><i style="display:block;height:100%;width:${(p.replies / max) * 100}%;background:var(--series)"></i></div><b style="width:70px;text-align:left">${fa(p.replies)} جواب</b></div>`).join('')}</div>`;
+}
+
 function render() {
   if (!data?.tweets?.length) {
-    main.innerHTML = `<div class="card empty"><b>📊</b>هنوز داده‌ای نیست.<br>در X به صفحه‌ی پروفایل خودتان بروید و دکمه‌ی «📊 آمار توییت‌های من» پایین صفحه را بزنید.</div>`;
+    main.innerHTML = `<div class="card empty"><b>📊</b>هنوز داده‌ای نیست.<br>در X به صفحه‌ی پروفایل خودتان بروید و دکمه‌ی «📊 آمار توییت‌های من» پایین صفحه را بزنید.</div>${audienceCard()}`;
     return;
   }
   const tw = data.tweets.map((t) => ({ ...t, d: new Date(t.time) }));
@@ -113,7 +121,7 @@ function render() {
         <details><summary>نمایش به‌صورت جدول</summary><table>${days.map((h) => `<tr><td>${DAYS[h.key]}</td><td class="num">${h.n ? m.fmt(h.value) : '—'}</td><td class="num">${fa(h.n)} توییت</td></tr>`).join('')}</table></details></div>
     </div>
     <div class="card"><h2>برترین توییت‌ها</h2><p class="muted" style="font-size:12px;margin-bottom:8px">روی عنوان ستون بزنید تا مرتب شود</p>
-      <div style="overflow:auto"><table id="top"></table></div></div>`;
+      <div style="overflow:auto"><table id="top"></table></div></div>${audienceCard()}`;
 
   const draw = () => {
     barChart(document.getElementById('cH'), hours, (r) => (r.key % 3 === 0 ? fa(r.key) : ''), (r) => `ساعت ${fa(r.key)}`);
@@ -149,4 +157,4 @@ document.querySelectorAll('#metric .chip').forEach((c) => c.addEventListener('cl
 const st = document.createElement('style');
 st.textContent = '@keyframes grow { from { transform: scaleY(0); } }';
 document.head.appendChild(st);
-chrome.storage.local.get('analytics').then(({ analytics }) => { data = analytics; render(); });
+chrome.storage.local.get(['analytics', 'audience']).then(({ analytics, audience: a }) => { data = analytics; audience = a; render(); });

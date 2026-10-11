@@ -37,10 +37,12 @@ function openManage(src = 'pages/following.html?embed=1') {
 }
 $('openManage').addEventListener('click', () => openManage('pages/following.html?embed=1'));
 $('openAi').addEventListener('click', () => openManage('pages/ai.html?embed=1'));
+$('openPro').addEventListener('click', () => openManage('pages/pro.html?embed=1'));
+$('openBackup').addEventListener('click', () => openManage('pages/backup.html?embed=1'));
 $('manageBack').addEventListener('click', () => setNav('tools'));
 els.navtabs.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => setNav(b.dataset.tab)));
 
-const TOOL_DEFAULTS = { persianFont: true, rtlFix: true, tweetMenu: true, composer: true };
+const TOOL_DEFAULTS = { persianFont: true, rtlFix: true, tweetMenu: true, composer: true, translate: true };
 chrome.storage.local.get('tools').then(({ tools }) => {
   const t = { ...TOOL_DEFAULTS, ...tools };
   document.querySelectorAll('[data-tool]').forEach((cb) => {
