@@ -167,6 +167,7 @@ $('csv').addEventListener('click', () => {
 $('syncBtn').addEventListener('click', async () => {
   if (!me) { toast('اول x.com را باز کنید و وارد شوید تا حسابتان شناخته شود'); chrome.tabs.create({ url: 'https://x.com/home' }); return; }
   const type = tab === 'followers' || tab === 'unfollowed' ? 'followers' : 'following';
+  await chrome.storage.local.remove('syncDiag');
   await chrome.storage.local.set({ syncState: { type, state: 'running', count: 0, at: Date.now() } });
   const t = await chrome.tabs.create({ url: `https://x.com/${me}/${type}`, active: false });
   syncTabId = t.id;
@@ -174,8 +175,28 @@ $('syncBtn').addEventListener('click', async () => {
 });
 $('syncStop').addEventListener('click', () => { if (syncTabId) chrome.tabs.sendMessage(syncTabId, { type: 'syncStop' }).catch(() => {}); });
 
+// What happened in the last sync, step by step (kept until the next sync).
+function drawDiag(d, st) {
+  const box = $('diagBox');
+  const ok = st?.state === 'done' && st.reason === 'end';
+  if (!d || ok || !st || st.state !== 'done') { box.hidden = true; return; }
+  const S = d.steps || {}, R = S.result || {};
+  const line = (good, text) => `<li>${good ? '✅' : '❌'} ${text}</li>`;
+  const items = [
+    line(!!S.page, S.page ? `صفحه‌ی ${d.type === 'following' ? 'Following' : 'Followers'} در X باز شد (${d.path})` : 'اکستنشن روی صفحه‌ی Following/Followers اجرا نشد. آدرس باز شده را بررسی کنید.'),
+    line(S.job, S.job ? 'تب به‌عنوان تب همگام‌سازی شناخته شد' : 'تب به‌عنوان تب همگام‌سازی شناخته نشد'),
+    line(S.reader, S.reader ? 'خواننده‌ی داخل صفحه‌ی X فعال است' : 'خواننده‌ی داخل صفحه‌ی X پاسخ نداد (احتمالاً اکستنشن را Reload نکرده‌اید یا صفحه رفرش نشده)'),
+    line(R.reason === 'end' || R.count > 0, R.reason ? `نتیجه: ${R.reason} · ${R.count || 0} حساب · ${R.pages || 0} صفحه${R.status ? ` · کد ${R.status}` : ''}` : 'همگام‌سازی به نتیجه نرسید'),
+  ];
+  if (R.seen?.length) items.push(`<li dir="ltr" style="text-align:left;color:#9a9a9a;font-size:11.5px;word-break:break-all">درخواست‌های X: ${R.seen.join(', ')}</li>`);
+  $('diagList').innerHTML = items.join('');
+  box.hidden = false;
+  $('diagCopy').onclick = () => { navigator.clipboard.writeText(JSON.stringify({ diag: d, state: st }, null, 1)); toast('کپی شد ✓'); };
+}
+
 function drawSync(st) {
   const box = $('syncBox');
+  chrome.storage.local.get('syncDiag').then(({ syncDiag }) => drawDiag(syncDiag, st));
   const fresh = st && Date.now() - st.at < 10 * 60e3;
   if (!fresh) { box.hidden = true; return; }
   const running = st.state === 'running';
@@ -210,6 +231,7 @@ chrome.storage.onChanged.addListener(async (c, area) => {
   if (area !== 'local') return;
   if (c.followData || c.me) { await load(); draw(); }
   if (c.syncState) drawSync(c.syncState.newValue);
+  if (c.syncDiag) chrome.storage.local.get('syncState').then(({ syncState }) => drawDiag(c.syncDiag.newValue, syncState));
 });
 load().then(draw);
 chrome.storage.local.get('syncState').then(({ syncState }) => drawSync(syncState));

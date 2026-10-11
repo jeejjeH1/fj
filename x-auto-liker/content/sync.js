@@ -7,6 +7,11 @@
   const handle = m[1];
   const type = m[2];
 
+  // Step-by-step diagnosis, kept in storage so the extension window can show it (even after it was closed).
+  const diag = { at: Date.now(), type, path: location.pathname, steps: {} };
+  const step = (k, v) => { diag.steps[k] = v; chrome.storage.local.set({ syncDiag: diag }); };
+  step('page', true);
+
   // Is this tab a sync tab? The extension records the tab; X may rewrite the address, so it is not used as a marker.
   async function isSyncTab() {
     if (location.hash === '#xal-sync') return { foreground: true };
@@ -29,8 +34,16 @@
     no_request: ['درخواست لیست پیدا نشد', 'صفحه را رفرش کنید و دوباره از اکستنشن بزنید.'],
   };
 
-  isSyncTab().then((job) => {
+  isSyncTab().then(async (job) => {
+  step('job', !!job);
   if (!job) return;
+  // is the page-side reader alive in X's own page?
+  const pong = await new Promise((res) => {
+    const t = setTimeout(() => res(null), 1500);
+    window.addEventListener('message', function on(e) { if (e.source === window && e.data?.__xal === 'pong') { clearTimeout(t); window.removeEventListener('message', on); res(e.data); } });
+    window.postMessage({ __xal: 'ping' }, location.origin);
+  });
+  step('reader', !!pong);
   const bgMode = !job.foreground; // started from the extension window: no panel, closes itself
   const label = type === 'following' ? 'دنبال‌شوندگان' : 'دنبال‌کنندگان';
   const { body, close, modal } = XAL.modal({ title: `🔄 همگام‌سازی ${label}`, onClose: () => window.postMessage({ __xal: 'syncStop' }, location.origin) });
@@ -61,6 +74,7 @@
 
     const [title, detail] = REASONS[d.reason] || REASONS.error;
     const needsYou = d.reason === 'auth' || d.reason === 'no_request';
+    step('result', { reason: d.reason, count: d.users.length, pages: d.pages || 0, status: d.lastStatus || 0, seen: d.seen || [] });
     const seenTxt = d.seen?.length ? `درخواست‌هایی که X فرستاد: ${d.seen.join('، ')}` : 'هیچ درخواستی از X دیده نشد.';
     if (d.users.length) {
       const { followData = {} } = await chrome.storage.local.get('followData');

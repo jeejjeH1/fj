@@ -16,11 +16,10 @@ const els = {
 
 /* ───────────── top tabs + tools ───────────── */
 let navTab = 'like';
-try { navTab = localStorage.getItem('navTab') || 'like'; if (navTab === 'manage') navTab = 'tools'; } catch { /* storage blocked */ }
+try { navTab = localStorage.getItem('navTab') || 'like'; } catch { /* storage blocked */ }
 function setNav(t) {
   navTab = t;
-  // the manager lives under the Tools tab; remember Tools, not the embedded view
-  try { localStorage.setItem('navTab', t === 'manage' ? 'tools' : t); } catch { /* ignore */ }
+  try { localStorage.setItem('navTab', t); } catch { /* ignore */ }
   const shown = t === 'manage' ? 'tools' : t;
   els.navtabs.dataset.tab = shown;
   els.navtabs.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.tab === shown));
@@ -445,7 +444,7 @@ async function init() {
   onTimingChange();
   updateCount();
   state = runState;
-  setNav(navTab);
+  if (navTab === 'manage') openManage(); else setNav(navTab);
   requestAnimationFrame(tick);
   requestAnimationFrame(animateFx);
 }

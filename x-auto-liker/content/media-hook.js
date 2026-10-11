@@ -48,7 +48,7 @@
     return out;
   }
 
-  function collect(json) {
+  function collect(json, req) {
     const found = {};
     const seen = new WeakSet();
     const walk = (o, depth) => {
@@ -70,6 +70,12 @@
     walk(json, 0);
     if (Object.keys(found).length) window.postMessage({ __xal: 'media', found }, location.origin);
     const users = collectUsers(json);
+    // On a Following / Followers page, a request that returns a list of accounts with a next-page marker IS the
+    // list request, whatever X calls it. This keeps the sync working if X renames the operation.
+    const onList = /^\/[^/]+\/(following|followers)\/?$/.exec(location.pathname);
+    if (onList && req?.url && users.length >= 2 && bottomCursor(json) && /[?&]variables=/.test(req.url) && !lastReq[onList[1]]) {
+      try { lastReq[onList[1]] = { url: new URL(req.url, location.origin).href, headers: headersToObj(req.headers) }; } catch { /* ignore */ }
+    }
     if (users.length) {
       for (const u of users) if (u.handle) usersBuf.set(u.handle.toLowerCase(), { ...usersBuf.get(u.handle.toLowerCase()), ...u });
       window.postMessage({ __xal: 'users', users }, location.origin);
@@ -116,8 +122,9 @@
     if (isApi(String(this.__xalUrl))) {
       this.addEventListener('load', () => {
         try {
-          if (this.responseType === '' || this.responseType === 'text') collect(JSON.parse(this.responseText));
-          else if (this.responseType === 'json') collect(this.response);
+          const req = { url: this.__xalUrl, headers: this.__xalHeaders };
+          if (this.responseType === '' || this.responseType === 'text') collect(JSON.parse(this.responseText), req);
+          else if (this.responseType === 'json') collect(this.response, req);
         } catch { /* not JSON */ }
       });
     }
@@ -133,7 +140,10 @@
     const res = await origFetch.apply(this, args);
     try {
       const url = typeof args[0] === 'string' ? args[0] : args[0]?.url;
-      if (isApi(url)) res.clone().json().then(collect).catch(() => {});
+      if (isApi(url)) {
+        const req = { url, headers: args[1]?.headers || (typeof args[0] === 'object' ? args[0].headers : undefined) };
+        res.clone().json().then((j) => collect(j, req)).catch(() => {});
+      }
     } catch { /* ignore */ }
     return res;
   };
@@ -166,7 +176,7 @@
     if (!req) return post({ state: 'done', reason: 'no_request', users: [], seen: seenOps.slice() });
 
     const all = new Map();
-    let cursor = null, idle = 0, pages = 0, reason = 'end';
+    let cursor = null, idle = 0, pages = 0, reason = 'end', lastStatus = 0;
     while (!job.stop && pages < 400) {
       const u = new URL(req.url);
       let vars = {};
@@ -176,6 +186,7 @@
       let res;
       try { res = await origFetch(u.href, { headers: req.headers, credentials: 'include' }); }
       catch { reason = 'network'; break; }
+      lastStatus = res.status;
       if (res.status === 429) { reason = 'rate_limit'; break; }
       if (res.status === 401 || res.status === 403) { reason = 'auth'; break; }
       if (!res.ok) { reason = 'error'; break; }
@@ -194,11 +205,12 @@
     }
     if (job.stop) reason = 'stopped';
     syncing = null;
-    post({ state: 'done', reason, users: [...all.values()] });
+    post({ state: 'done', reason, users: [...all.values()], pages, lastStatus, seen: seenOps.slice() });
   }
 
   window.addEventListener('message', (e) => {
     if (e.source !== window) return;
+    if (e.data?.__xal === 'ping') window.postMessage({ __xal: 'pong', seen: seenOps.slice(), have: Object.keys(lastReq) }, location.origin);
     if (e.data?.__xal === 'syncStart' && !syncing && (e.data.type === 'following' || e.data.type === 'followers')) runSync(e.data.type);
     if (e.data?.__xal === 'syncStop' && syncing) syncing.stop = true;
   });
