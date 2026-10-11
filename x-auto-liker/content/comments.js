@@ -66,7 +66,7 @@
         const showFa = it.fa && !rtl;
         return `<div class="cm" data-i="${i}" style="padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);margin-bottom:8px;animation:cmIn .4s both;animation-delay:${i * 40}ms">
           <div style="font-size:14px;line-height:1.8;white-space:pre-wrap;direction:${rtl ? 'rtl' : 'ltr'};text-align:${rtl ? 'right' : 'left'}">${XAL.esc(it.text)}</div>
-          ${showFa ? `<div style="margin-top:6px;padding-top:6px;border-top:1px dashed rgba(255,255,255,.12);font-size:13px;line-height:1.8;color:#b8b2d6;direction:rtl;text-align:right">🇮🇷 ${XAL.esc(it.fa)}</div>` : ''}
+          ${showFa ? `<div class="fa" dir="rtl" style="display:block;width:100%;margin-top:6px;padding-top:6px;border-top:1px dashed rgba(255,255,255,.12);font-size:13px;line-height:1.9;color:#b8b2d6;direction:rtl;text-align:right;unicode-bidi:isolate;user-select:none;-webkit-user-select:none;cursor:default" title="ترجمه فقط برای خواندن است و کپی نمی‌شود">${XAL.esc(it.fa)}</div>` : ''}
           <div class="row" style="margin-top:8px;justify-content:flex-start"><button class="btn sm use">📝 استفاده</button><button class="btn ghost sm copy" title="فقط متن اصلی کامنت کپی می‌شود، بدون ترجمه">کپی</button><span class="muted" style="font-size:11.5px;margin-right:auto">${XAL.fa(it.text.length)} کاراکتر</span></div></div>`;
       }).join('');
       q(body, '#out').innerHTML = `${cards}<div class="muted" style="text-align:center;font-size:11.5px;margin-top:6px">مدل: <span dir="ltr">${XAL.esc(res.model)}</span> · متن فقط در کادر پاسخ قرار می‌گیرد؛ ارسال با خودتان است.</div>`;
