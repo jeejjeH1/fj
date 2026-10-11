@@ -578,7 +578,16 @@ async function aiTestKey(key) {
   return { ok: true, label: d.label || '', free: !!d.is_free_tier, usage: d.usage };
 }
 
+let missQueue = Promise.resolve();
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+  if (msg.type === 'i18nMiss') {
+    missQueue = missQueue.then(async () => {
+      const { i18nMisses } = await chrome.storage.local.get('i18nMisses');
+      const a = i18nMisses || [];
+      if (!a.includes(msg.key)) await chrome.storage.local.set({ i18nMisses: [...a, msg.key] });
+    });
+    return;
+  }
   if (msg.type === 'aiTranslate') {
     aiTranslate(msg).then(sendResponse, (e) => sendResponse({ ok: false, code: 'failed', error: e.message }));
     return true;

@@ -461,3 +461,16 @@ chrome.storage.onChanged.addListener((changes, area) => {
 });
 
 init();
+
+// Language toggle (Persian <-> English). Every page and the X-page UI follow the stored value.
+(() => {
+  const btn = document.getElementById('langBtn');
+  const show = (l) => { btn.textContent = l === 'en' ? 'فا' : 'EN'; };
+  chrome.storage.local.get('lang').then(({ lang }) => show(lang || 'fa'));
+  btn.addEventListener('click', async () => {
+    const { lang } = await chrome.storage.local.get('lang');
+    const next = (lang || 'fa') === 'en' ? 'fa' : 'en';
+    await chrome.storage.local.set({ lang: next });
+    show(next);
+  });
+})();

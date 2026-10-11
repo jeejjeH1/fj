@@ -297,3 +297,13 @@ html.wide .views { height: 520px; }
 #viewManage .manage-back { align-self: flex-start; margin: 4px 16px 6px; border: 0; background: none; color: var(--muted); cursor: pointer; font: 700 12px Vazirmatn, Tahoma, sans-serif; }
 #viewManage .manage-back:hover { color: var(--text); }
 #manageFrame { flex: 1; width: 100%; border: 0; background: transparent; }
+
+.lang-btn { margin-inline-start: auto; margin-inline-end: 8px; height: 28px; min-width: 38px; padding: 0 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.07); color: #fff; font: 700 12px/1 inherit; cursor: pointer; }
+.lang-btn:hover { background: rgba(255,255,255,.14); }
+/* English = left-to-right: mirror the sliding indicators */
+html[dir="ltr"] .mode-glider, html[dir="ltr"] .nav-glider { right: auto; left: 4px; }
+html[dir="ltr"] .modes[data-mode="auto"] .mode-glider, html[dir="ltr"] .navtabs[data-tab="tools"] .nav-glider { transform: translateX(calc(100% + 4px)); }
+html[dir="ltr"] .toggle input:checked + .knob::after { transform: translateX(16px); }
+html[dir="ltr"] .toggle .knob::after { right: auto; left: 3px; }
+.lang-btn + .pill { margin-inline-start: 0; }

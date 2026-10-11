@@ -211,6 +211,14 @@
   (document.body || document.documentElement).appendChild(host);
   const layer = root.querySelector('.layer');
   XAL.ui = { root, layer };
+  // English / Persian: on X's own page only our .xal-* elements are translated, never X's text or tweets.
+  if (window.XI) {
+    XI.scope = '[class*="xal-"],#xal-ui';
+    const dir = () => { layer.style.direction = XI.lang === 'en' ? 'ltr' : 'rtl'; layer.classList.toggle('en', XI.lang === 'en'); };
+    XI.onChange = dir; dir();
+    XI.observe(root);
+    XI.observe(document.body || document.documentElement);
+  }
   XAL.addStyle = (css) => { const s = document.createElement('style'); s.textContent = css; root.prepend(s); };
 
   XAL.toast = (msg) => {
