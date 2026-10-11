@@ -476,8 +476,22 @@ function aiBuildPrompt(cfg, tweet, extra) {
 اگر خود کامنت فارسی است، مقدار "fa" را رشته‌ی خالی بگذار.`;
 }
 
+// Some models put the Persian translation inside the comment itself ("English text — فارسی" or "English (فارسی)").
+// Keep the original comment clean so copy / use only ever carry that, and move the translation to its own field.
+function aiSplitMixed(it) {
+  const fa = /[\u0600-\u06FF]/;
+  const m = it.text.match(/^(.*?[A-Za-z].*?)\s*(?:[(\[]\s*|[-–—|/:]+\s*|\n+)([\u0600-\u06FF][\s\S]*?)[)\]]?\s*$/);
+  if (m && fa.test(m[2]) && (m[1].match(/[A-Za-z]/g) || []).length >= 8 && !fa.test(m[1])) {
+    return { text: m[1].trim().replace(/[\s(\[\-–—|/:]+$/, ''), fa: it.fa || m[2].trim() };
+  }
+  return it;
+}
+
 // Models answer in many shapes: fenced JSON, an object holding the array, or numbered lines.
 function aiParse(text) {
+  return aiParseRaw(text).map(aiSplitMixed);
+}
+function aiParseRaw(text) {
   const t = String(text || '').replace(/```(?:json)?/gi, '').trim();
   const tryJson = (s) => { try { return JSON.parse(s); } catch { return null; } };
   let v = tryJson(t);
