@@ -70,7 +70,7 @@ body::after { /* grain */
 @keyframes ping { 0% { box-shadow: 0 0 0 0 rgba(255, 46, 126, .8); } 100% { box-shadow: 0 0 0 9px rgba(255, 46, 126, 0); } }
 
 /* ── views ───────────────────────────── */
-.views { position: relative; z-index: 2; height: 530px; }
+.views { position: relative; z-index: 2; height: 490px; }
 .view { position: absolute; inset: 0; padding: 8px 16px 16px; overflow-y: auto; scrollbar-width: none;
   opacity: 0; transform: translateY(18px) scale(.98); pointer-events: none; transition: opacity .5s var(--ease), transform .6s var(--ease); }
 .view::-webkit-scrollbar { display: none; }
@@ -262,3 +262,28 @@ kbd { margin-inline-start: auto; font: 500 10.5px/1 Vazirmatn, monospace; paddin
 .cta kbd { margin: 0; background: rgba(0, 0, 0, .22); color: #fff; }
 .est.safe { color: var(--green); background: rgba(47, 227, 154, .1); }
 .run-actions #next { flex: 2; }
+
+/* ── top navigation ───────────────────────────── */
+.navtabs { position: relative; z-index: 2; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin: 6px 16px 4px; padding: 4px; border-radius: 14px;
+  background: rgba(255, 255, 255, .04); border: 1px solid var(--card-b); }
+.navtabs button { position: relative; z-index: 1; height: 30px; border: 0; background: none; cursor: pointer; border-radius: 10px; color: var(--muted);
+  font: 700 12.5px Vazirmatn, Tahoma, sans-serif; transition: color .3s; }
+.navtabs button.on { color: #fff; }
+.nav-glider { position: absolute; top: 4px; bottom: 4px; right: 4px; width: calc(50% - 6px); border-radius: 10px; background: rgba(255, 255, 255, .1);
+  border: 1px solid rgba(255, 255, 255, .12); transition: transform .5s var(--spring); }
+.navtabs[data-tab="tools"] .nav-glider { transform: translateX(calc(-100% - 4px)); }
+
+/* ── tools view ───────────────────────────── */
+.toggle.tool { align-items: flex-start; padding: 8px 0; border-bottom: 1px solid rgba(255, 255, 255, .05); }
+.toggle.tool:last-child { border-bottom: 0; }
+.toggle.tool .knob { margin-top: 2px; }
+.toggle.tool b { display: block; font-size: 12.5px; }
+.toggle.tool small { display: block; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.tile { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 12px; border-radius: 16px; cursor: pointer; text-align: right; color: var(--text);
+  background: var(--card); border: 1px solid var(--card-b); font: 500 12px Vazirmatn, Tahoma, sans-serif; transition: transform .35s var(--spring), border-color .3s, background .3s; }
+.tile:hover { transform: translateY(-2px); border-color: rgba(255, 46, 126, .45); background: rgba(255, 46, 126, .07); }
+.tile i { font-style: normal; font-size: 20px; margin-bottom: 4px; }
+.tile b { font-size: 13px; }
+.tile small { color: var(--muted); font-size: 10.5px; }
+.hint-line { font-size: 11px; color: var(--muted); text-align: center; }

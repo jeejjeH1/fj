@@ -95,7 +95,9 @@
     const remaining = total - i - 1;
     els.pos.textContent = `${fa(i + 1)}/${fa(total)}`;
     els.left.textContent = remaining > 0 ? `${fa(remaining)} تا مونده` : 'آخریه!';
-    els.sub.textContent = `${fa(s.results.filter((r) => r.result === 'liked').length)} لایک تا الان`;
+    els.sub.textContent = unf()
+      ? `${fa(s.results.filter((r) => r.result === 'unfollowed').length)} آنفالو تا الان`
+      : `${fa(s.results.filter((r) => r.result === 'liked').length)} لایک تا الان`;
     els.pr.style.strokeDashoffset = 100 - ((i + 1) / total) * 100;
     els.bar.style.width = `${(i / total) * 100}%`;
     els.nextText.textContent = remaining > 0 ? 'بعدی' : 'تمام';
@@ -106,9 +108,10 @@
   function paintLiked() {
     els.hint.classList.toggle('ok', liked);
     els.next.classList.toggle('glow', liked);
+    const verb = unf() ? 'آنفالو' : 'لایک';
     els.hintText.textContent = liked
-      ? (state?.autoNext ? 'لایک شد ✓ می‌ریم بعدی…' : 'لایک شد ✓ حالا بزن «بعدی»')
-      : 'توییت رو لایک کن، بعد بزن «بعدی»';
+      ? (state?.autoNext ? `${verb} شد ✓ می‌ریم بعدی…` : `${verb} شد ✓ حالا بزن «بعدی»`)
+      : unf() ? 'دکمه‌ی Following را بزنید و آنفالو کنید، بعد «بعدی»' : 'توییت رو لایک کن، بعد بزن «بعدی»';
   }
 
   function sparkle() {
@@ -122,9 +125,14 @@
     }
   }
 
-  // Watch the focal tweet's like button (read-only).
+  const unf = () => state?.kind === 'unfollow';
+  // Watch the focal tweet's like button / the profile's follow button (read-only).
   const statusId = () => state?.queue?.[state.index]?.match(/status\/(\d+)/)?.[1];
   function isLiked() {
+    if (unf()) {
+      const h = document.querySelector('[data-testid="placementTracking"]');
+      return !!h?.querySelector('[data-testid$="-follow"]') && !h.querySelector('[data-testid$="-unfollow"]');
+    }
     const id = statusId();
     if (!id) return false;
     const articles = [...document.querySelectorAll('article[data-testid="tweet"]')];

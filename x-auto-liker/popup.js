@@ -11,7 +11,38 @@ const els = {
   stLiked: $('stLiked'), stAlready: $('stAlready'), stError: $('stError'), stAlreadyLabel: $('stAlreadyLabel'),
   modes: $('modes'), manualCard: $('manualCard'), autoCard: $('autoCard'), autoNext: $('autoNext'),
   closeTabManual: $('closeTabManual'), startText: $('startText'), next: $('next'), nextText: $('nextText'),
+  navtabs: $('navtabs'), viewTools: $('viewTools'), stLikedLabel: $('stLikedLabel'),
 };
+
+/* ───────────── top tabs + tools ───────────── */
+let navTab = 'like';
+try { navTab = localStorage.getItem('navTab') || 'like'; } catch { /* storage blocked */ }
+function setNav(t) {
+  navTab = t;
+  try { localStorage.setItem('navTab', t); } catch { /* ignore */ }
+  els.navtabs.dataset.tab = t;
+  els.navtabs.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.tab === t));
+  render(state);
+}
+els.navtabs.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => setNav(b.dataset.tab)));
+
+const TOOL_DEFAULTS = { persianFont: true, rtlFix: true, tweetMenu: true, composer: true };
+chrome.storage.local.get('tools').then(({ tools }) => {
+  const t = { ...TOOL_DEFAULTS, ...tools };
+  document.querySelectorAll('[data-tool]').forEach((cb) => {
+    cb.checked = !!t[cb.dataset.tool];
+    cb.addEventListener('change', async () => {
+      const { tools: cur } = await chrome.storage.local.get('tools');
+      chrome.storage.local.set({ tools: { ...TOOL_DEFAULTS, ...cur, [cb.dataset.tool]: cb.checked } });
+    });
+  });
+});
+document.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => chrome.tabs.create({ url: chrome.runtime.getURL(b.dataset.open) })));
+$('openFollow').addEventListener('click', async () => {
+  const { me } = await chrome.storage.local.get('me');
+  chrome.tabs.create({ url: me ? `https://x.com/${me}/following` : 'https://x.com/home' });
+  if (!me) $('toolsHint').textContent = 'اول X را باز کنید تا حسابتان شناخته شود، بعد دوباره بزنید.';
+});
 
 /* ───────────── mode switch ───────────── */
 let mode = 'manual';
@@ -175,11 +206,12 @@ let prev = { results: null, phase: null };
 
 function labelFor(url) {
   const m = url.match(/x\.com\/([^/]+)\/status\/(\d+)/);
-  if (!m) return url;
+  if (!m) return `@${XAL_esc(url.split('/').pop())}`;
   const tail = `…${m[2].slice(-5)}`;
   return m[1] === 'i' ? `tweet <i>${tail}</i>` : `@${m[1]} <i>${tail}</i>`;
 }
 
+const XAL_esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 function buildQueue(queue) {
   els.queue.innerHTML = '';
   queue.forEach((url, i) => {
@@ -201,8 +233,9 @@ function setCount(el, n) {
 function render(s) {
   state = s;
   const showRun = !!s && (s.running || ((s.phase === 'done' || s.phase === 'stopped') && !s.dismissed));
-  els.viewSetup.classList.toggle('is-active', !showRun);
-  els.viewRun.classList.toggle('is-active', showRun);
+  els.viewTools.classList.toggle('is-active', navTab === 'tools');
+  els.viewSetup.classList.toggle('is-active', navTab === 'like' && !showRun);
+  els.viewRun.classList.toggle('is-active', navTab === 'like' && showRun);
   els.pill.classList.toggle('is-running', !!s?.running);
   els.pill.classList.toggle('is-done', !!s && !s.running && s.phase === 'done');
   els.pillText.textContent = s?.running ? 'در حال اجرا' : (s?.phase === 'done' && showRun ? 'تمام شد' : 'آماده');
@@ -221,7 +254,8 @@ function render(s) {
     li.className = '';
     if (r) {
       li.classList.add('is-done', `r-${r.result}`);
-      li.querySelector('.ico').textContent = { liked: '♥', already: '✓', skipped: '–' }[r.result] || '!';
+      li.querySelector('.ico').textContent = { liked: '♥', unfollowed: '✓', already: '✓', skipped: '–' }[r.result] || '!';
+      if (r.result === 'unfollowed') li.classList.replace('r-unfollowed', 'r-liked');
       li.title = r.detail || '';
     } else if (!finished && i === s.index) {
       li.classList.add('is-current');
@@ -234,9 +268,11 @@ function render(s) {
 
   const count = (k) => results.filter((r) => r.result === k).length;
   const manual = s.mode === 'manual';
-  setCount(els.stLiked, count('liked'));
+  const unf = s.kind === 'unfollow';
+  setCount(els.stLiked, count(unf ? 'unfollowed' : 'liked'));
+  els.stLikedLabel.textContent = unf ? 'آنفالو شد' : 'لایک شد';
   setCount(els.stAlready, count(manual ? 'skipped' : 'already'));
-  els.stAlreadyLabel.textContent = manual ? 'رد شد' : 'از قبل';
+  els.stAlreadyLabel.textContent = manual ? 'رد شد' : unf ? 'فالو نبود' : 'از قبل';
   setCount(els.stError, count('error'));
 
   els.ringTotal.style.strokeDashoffset = 1000 * (1 - (total ? done / total : 0));
@@ -244,7 +280,9 @@ function render(s) {
   els.statusText.textContent = finished ? s.statusText || '' : '';
 
   const ph = PHASES[s.phase] || PHASES.opening;
-  els.phaseLabel.textContent = ph.label;
+  els.phaseLabel.textContent = unf
+    ? ({ manual: 'آنفالو کن و بزن «بعدی»', reading: 'صبر قبل از آنفالو', liking: 'در حال آنفالو…', waiting: 'تا نفر بعدی' }[s.phase] || ph.label)
+    : ph.label;
   els.ringPhase.style.setProperty('--phase-c', ph.color);
   els.ringPhase.classList.toggle('indeterminate', !!ph.spin);
   els.bigHeart.classList.toggle('on', ['waiting', 'done', 'liking', 'manual'].includes(s.phase));
@@ -258,7 +296,7 @@ function render(s) {
   // celebrate only what happens while the popup is open
   if (prev.results !== null && results.length > prev.results) {
     const last = results[results.length - 1];
-    if (last.result === 'liked') heartBurst();
+    if (last.result === 'liked' || last.result === 'unfollowed') heartBurst();
   }
   if (prev.phase && prev.phase !== 'done' && s.phase === 'done') confetti();
   prev = { results: results.length, phase: s.phase };
@@ -400,7 +438,8 @@ async function init() {
   delayRange.set(Math.min(dMin, 120), Math.min(dMax, 120));
   onTimingChange();
   updateCount();
-  render(runState);
+  state = runState;
+  setNav(navTab);
   requestAnimationFrame(tick);
   requestAnimationFrame(animateFx);
 }

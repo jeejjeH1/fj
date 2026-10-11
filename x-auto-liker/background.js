@@ -27,9 +27,14 @@ async function setState(patch) {
   return next;
 }
 
-function summarize(results = [], mode = 'auto') {
-  const count = (kind) => String(results.filter((r) => r.result === kind).length)
+function summarize(results = [], mode = 'auto', kind = 'like') {
+  const count = (r) => String(results.filter((x) => x.result === r).length)
     .replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[d]);
+  if (kind === 'unfollow') {
+    return mode === 'manual'
+      ? `${count('unfollowed')} آنفالو، ${count('skipped')} رد شد`
+      : `${count('unfollowed')} آنفالو، ${count('already')} از قبل فالو نبود، ${count('error')} خطا`;
+  }
   return mode === 'manual'
     ? `${count('liked')} لایک، ${count('skipped')} رد شد`
     : `${count('liked')} لایک، ${count('already')} از قبل، ${count('error')} خطا`;
@@ -105,25 +110,70 @@ async function tweetActionInPage(statusId, action) {
   return { result: 'error', detail: 'tweet not found' };
 }
 
-async function runInTab(tabId, statusId, action) {
+// Injected into a profile page (unfollow queue). Same contract as tweetActionInPage.
+async function profileActionInPage(handle, action) {
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const header = () => document.querySelector('[data-testid="placementTracking"]') || document;
+  const deadline = Date.now() + 20000;
+  while (Date.now() < deadline) {
+    if (location.pathname.startsWith('/i/flow/login') || document.querySelector('[data-testid="loginButton"]')) {
+      return { result: 'error', detail: 'not logged in', fatal: true };
+    }
+    if (document.querySelector('[data-testid="emptyState"]')) return { result: 'error', detail: 'account not found' };
+    const unfollow = header().querySelector('[data-testid$="-unfollow"]');
+    const follow = header().querySelector('[data-testid$="-follow"]');
+    if (follow && !unfollow) return { result: 'already' }; // not following anymore
+    if (unfollow) {
+      if (action === 'find') return { result: 'ready' };
+      unfollow.click();
+      for (let i = 0; i < 20; i++) {
+        await sleep(250);
+        document.querySelector('[data-testid="confirmationSheetConfirm"]')?.click();
+        if (header().querySelector('[data-testid$="-follow"]') && !header().querySelector('[data-testid$="-unfollow"]')) return { result: 'unfollowed' };
+      }
+      return { result: 'error', detail: 'unfollow not confirmed' };
+    }
+    await sleep(500);
+  }
+  return { result: 'error', detail: 'profile not loaded' };
+}
+
+const KIND = {
+  like: { func: tweetActionInPage, target: (url) => url.match(/status\/(\d+)/)[1], max: 30 },
+  unfollow: { func: profileActionInPage, target: (url) => new URL(url).pathname.split('/')[1], max: 1000 },
+};
+
+async function runInTab(tabId, kind, url, action) {
+  const k = KIND[kind];
   const [inj] = await chrome.scripting.executeScript({
     target: { tabId },
-    func: tweetActionInPage,
-    args: [statusId, action],
+    func: k.func,
+    args: [k.target(url), action],
   });
   return inj?.result || { result: 'error', detail: 'no result' };
 }
 
+// Daily unfollow counter, so the auto queue respects the user's cap.
+const today = () => new Date().toISOString().slice(0, 10);
+async function unfollowsToday() {
+  const { unfollowLog } = await chrome.storage.local.get('unfollowLog');
+  return unfollowLog?.day === today() ? unfollowLog.n : 0;
+}
+async function countUnfollow() {
+  await chrome.storage.local.set({ unfollowLog: { day: today(), n: (await unfollowsToday()) + 1 } });
+}
+
 const randBetween = (min, max) => min + Math.floor(Math.random() * (Math.max(min, max) - min + 1));
 
-// opts: { links, preMinMs, preMaxMs, delayMinMs, delayMaxMs, closeTab }
+// opts: { kind, links, preMinMs, preMaxMs, delayMinMs, delayMaxMs, closeTab, dailyCap }
 async function run(opts) {
   const { links, closeTab } = opts;
+  const kind = opts.kind || 'like';
   const runId = ++currentRun;
   startKeepAlive();
   await chrome.storage.local.set({
     runState: {
-      mode: 'auto', running: true, queue: links, results: [], statusText: '', tabId: null,
+      kind, mode: 'auto', running: true, queue: links, results: [], statusText: '', tabId: null,
       index: 0, phase: 'opening', phaseStart: Date.now(), phaseEnd: null,
     },
   });
@@ -147,19 +197,23 @@ async function run(opts) {
       await phase('opening', i);
 
       const url = links[i];
-      const statusId = url.match(/status\/(\d+)/)[1];
       let outcome;
       try {
         await navigateAndWait(tabId, url);
-        outcome = await runInTab(tabId, statusId, 'find');
+        outcome = await runInTab(tabId, kind, url, 'find');
         if (outcome.result === 'ready') {
+          if (kind === 'unfollow' && (await unfollowsToday()) >= (opts.dailyCap || 50)) {
+            stopReason = 'سقف روزانه‌ی آنفالو پر شد';
+            break;
+          }
           const pre = randBetween(opts.preMinMs, opts.preMaxMs);
           if (pre > 0) {
             await phase('reading', i, pre);
             if (!(await waitUnlessStopped(pre, runId))) return;
           }
           await phase('liking', i);
-          outcome = await runInTab(tabId, statusId, 'click');
+          outcome = await runInTab(tabId, kind, url, 'click');
+          if (outcome.result === 'unfollowed') await countUnfollow();
         }
       } catch (e) {
         outcome = { result: 'error', detail: e.message };
@@ -182,7 +236,7 @@ async function run(opts) {
   }
 
   if (runId !== currentRun) return;
-  const summary = summarize(results);
+  const summary = summarize(results, 'auto', kind);
 
   if (tabId !== null && closeTab && !stopReason) {
     chrome.tabs.remove(tabId).catch(() => {});
@@ -214,14 +268,25 @@ async function readLikeStateInPage(statusId) {
   return 'skipped';
 }
 
-async function startManual({ links, closeTab, autoNext }) {
+// Injected: reads (never clicks) whether you still follow this profile.
+async function readFollowStateInPage() {
+  for (let i = 0; i < 6; i++) {
+    const h = document.querySelector('[data-testid="placementTracking"]') || document;
+    if (h.querySelector('[data-testid$="-unfollow"]')) return 'skipped';
+    if (h.querySelector('[data-testid$="-follow"]')) return 'unfollowed';
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  return 'skipped';
+}
+
+async function startManual({ links, closeTab, autoNext, kind = 'like' }) {
   currentRun++; // cancels any auto run still going
   stopKeepAlive();
   // Save the state before the first page loads, so the on-page panel finds it.
   const tab = await chrome.tabs.create({ url: 'about:blank', active: true });
   await chrome.storage.local.set({
     runState: {
-      mode: 'manual', running: true, queue: links, results: [], index: 0, tabId: tab.id,
+      kind, mode: 'manual', running: true, queue: links, results: [], index: 0, tabId: tab.id,
       phase: 'manual', phaseStart: Date.now(), phaseEnd: null, closeTab, autoNext, statusText: '',
     },
   });
@@ -238,9 +303,11 @@ async function manualNext() {
     const url = s.queue[s.index];
     let result = 'skipped';
     try {
-      const [inj] = await chrome.scripting.executeScript({
-        target: { tabId: s.tabId }, func: readLikeStateInPage, args: [url.match(/status\/(\d+)/)[1]],
-      });
+      const [inj] = s.kind === 'unfollow'
+        ? await chrome.scripting.executeScript({ target: { tabId: s.tabId }, func: readFollowStateInPage })
+        : await chrome.scripting.executeScript({
+          target: { tabId: s.tabId }, func: readLikeStateInPage, args: [url.match(/status\/(\d+)/)[1]],
+        });
       result = inj?.result || 'skipped';
     } catch { /* tab on another page or closed: count as skipped */ }
 
@@ -262,7 +329,7 @@ async function finishManual(s, stopped) {
   await chrome.storage.local.set({
     runState: {
       ...s, running: false, phase: stopped ? 'stopped' : 'done', phaseEnd: null,
-      statusText: `${stopped ? 'متوقف شد' : 'تمام شد'} — ${summarize(s.results, 'manual')}`,
+      statusText: `${stopped ? 'متوقف شد' : 'تمام شد'} — ${summarize(s.results, 'manual', s.kind)}`,
     },
   });
 }
@@ -285,7 +352,7 @@ chrome.commands.onCommand.addListener((cmd) => { if (cmd === 'next-link') manual
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === 'start') {
-    const links = msg.links.slice(0, 30);
+    const links = msg.links.slice(0, KIND[msg.kind || 'like'].max);
     if (msg.mode === 'manual') startManual({ ...msg, links });
     else run({ ...msg, links });
     sendResponse({ ok: true });
@@ -299,12 +366,32 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       if (runState?.mode === 'manual') return finishManual(runState, true);
       return setState({
         running: false, phase: 'stopped', phaseEnd: null,
-        statusText: `متوقف شد — ${summarize(runState?.results)}`,
+        statusText: `متوقف شد — ${summarize(runState?.results, 'auto', runState?.kind)}`,
       });
     });
     sendResponse({ ok: true });
+  } else if (msg.type === 'fetchDataURL') {
+    fetchDataURL(msg.url).then((dataURL) => sendResponse({ dataURL }), () => sendResponse({}));
+    return true; // async response
+  } else if (msg.type === 'download') {
+    chrome.downloads.download({ url: msg.url, filename: msg.filename, conflictAction: 'uniquify' })
+      .then(() => sendResponse({ ok: true }), (e) => sendResponse({ ok: false, error: e.message }));
+    return true;
+  } else if (msg.type === 'openPage') {
+    chrome.tabs.create({ url: chrome.runtime.getURL(msg.page) });
+    sendResponse({ ok: true });
   }
 });
+
+// Images for the tweet-card canvas: fetched here (host permission, no CORS taint) as data: URLs.
+async function fetchDataURL(url) {
+  if (!/^https:\/\/(pbs|abs)\.twimg\.com\//.test(url)) throw new Error('blocked host');
+  const res = await fetch(url);
+  const buf = new Uint8Array(await res.arrayBuffer());
+  let bin = '';
+  for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+  return `data:${res.headers.get('content-type') || 'image/jpeg'};base64,${btoa(bin)}`;
+}
 
 // If the browser restarted, the run's tab is gone; mark the stale state as stopped.
 // (A manual run survives worker restarts, so only reset on startup/update, not on wake-up.)

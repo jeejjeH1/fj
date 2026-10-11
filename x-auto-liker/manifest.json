@@ -1,19 +1,73 @@
 {
   "manifest_version": 3,
   "name": "X Auto Liker",
-  "version": "3.0.0",
-  "description": "لینک‌های توییتر/X (تا ۳۰ تا) را نوبتی باز می‌کند؛ شما لایک می‌کنید و می‌روید بعدی. حالت خودکار هم دارد.",
-  "permissions": ["tabs", "scripting", "storage"],
-  "host_permissions": ["https://x.com/*", "https://twitter.com/*", "https://mobile.twitter.com/*"],
+  "version": "4.0.0",
+  "description": "جعبه‌ابزار فارسی X: لایک نوبتی، فونت فارسی، دانلود عکس و ویدیو، عکس از توییت، پوشه‌بندی، قالب متن، آمار توییت‌ها و فالوبک‌یاب.",
+  "permissions": [
+    "tabs",
+    "scripting",
+    "storage",
+    "downloads"
+  ],
+  "host_permissions": [
+    "https://x.com/*",
+    "https://twitter.com/*",
+    "https://mobile.twitter.com/*",
+    "https://pbs.twimg.com/*",
+    "https://abs.twimg.com/*",
+    "https://video.twimg.com/*"
+  ],
   "background": {
     "service_worker": "background.js"
   },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://x.com/*",
+        "https://twitter.com/*",
+        "https://mobile.twitter.com/*"
+      ],
+      "js": [
+        "content/media-hook.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://x.com/*",
+        "https://twitter.com/*",
+        "https://mobile.twitter.com/*"
+      ],
+      "js": [
+        "content/common.js",
+        "content/persian.js",
+        "content/tweet-tools.js",
+        "content/card.js",
+        "content/composer.js",
+        "content/analytics-collect.js",
+        "content/followers.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
   "web_accessible_resources": [
-    { "resources": ["fonts/*.woff2"], "matches": ["https://x.com/*", "https://twitter.com/*", "https://mobile.twitter.com/*"] }
+    {
+      "resources": [
+        "fonts/*.woff2"
+      ],
+      "matches": [
+        "https://x.com/*",
+        "https://twitter.com/*",
+        "https://mobile.twitter.com/*"
+      ]
+    }
   ],
   "commands": {
     "next-link": {
-      "suggested_key": { "default": "Alt+N" },
+      "suggested_key": {
+        "default": "Alt+N"
+      },
       "description": "حالت دستی: رفتن به لینک بعدی"
     }
   },
