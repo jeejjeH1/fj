@@ -206,7 +206,7 @@ async function run(opts) {
   startKeepAlive();
   await chrome.storage.local.set({
     runState: {
-      kind, mode: 'auto', running: true, queue: links, results: [], statusText: '', tabId: null,
+      kind, mode: 'auto', running: true, queue: links, results: [], statusText: '', tabId: null, dailyCap: opts.dailyCap || null,
       index: 0, phase: 'opening', phaseStart: Date.now(), phaseEnd: null,
     },
   });
@@ -434,7 +434,14 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       .then(() => sendResponse({ ok: true }), (e) => sendResponse({ ok: false, error: e.message }));
     return true;
   } else if (msg.type === 'openPage') {
-    chrome.tabs.create({ url: chrome.runtime.getURL(msg.page) });
+    // bring an already-open copy of the page to the front instead of opening another
+    const base = chrome.runtime.getURL(msg.page.split('?')[0]);
+    chrome.tabs.query({ url: `${base}*` }).then(async (tabs) => {
+      if (tabs[0]) {
+        await chrome.tabs.update(tabs[0].id, { active: true, url: chrome.runtime.getURL(msg.page) });
+        chrome.windows.update(tabs[0].windowId, { focused: true });
+      } else chrome.tabs.create({ url: chrome.runtime.getURL(msg.page) });
+    });
     sendResponse({ ok: true });
   }
 });

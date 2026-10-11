@@ -5,45 +5,7 @@
   <title>فالوبک‌یاب با آرشیو X — X Auto Liker</title>
   <link rel="stylesheet" href="../fonts/fonts.css">
   <link rel="stylesheet" href="page.css">
-  <style>
-    :root { --bg: #080808; --surface: #111; --card: #141414; --card-b: rgba(255,255,255,.08); --accent: #ff7a2f; --accent2: #ff9a4d;
-      --grad: linear-gradient(120deg, #ff7a2f, #ff5a1f 60%, #ff9a4d); }
-    body, html { background: #080808; }
-    .aurora { display: none; }
-    [hidden] { display: none !important; }
-    .card { background: #141414; box-shadow: none; }
-    .top .logo { background: rgba(255,122,47,.12); border-color: rgba(255,122,47,.3); }
-    .tabs { display: inline-flex; gap: 4px; padding: 4px; border-radius: 12px; background: #141414; border: 1px solid var(--card-b); }
-    .tabs button { border: 0; background: none; color: #9a9a9a; padding: 8px 14px; border-radius: 9px; cursor: pointer; font: 700 13px Vazirmatn, sans-serif; }
-    .tabs button.on { background: #ff7a2f; color: #000; }
-    .hero { font: 900 40px/1.1 Vazirmatn, sans-serif; margin: 6px 0 4px; letter-spacing: -.5px; }
-    .hero em { font-style: normal; color: var(--accent); }
-    .switch { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px; color: #cfcfcf; user-select: none; }
-    .bar2 { height: 6px; border-radius: 6px; background: #1f1f1f; overflow: hidden; }
-    .bar2 i { display: block; height: 100%; width: 0; background: var(--grad); transition: width .5s; }
-    .switch input { display: none; }
-    .switch i { width: 36px; height: 20px; border-radius: 20px; background: #2a2a2a; position: relative; transition: .3s; }
-    .switch i::after { content: ""; position: absolute; top: 3px; right: 3px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: .3s; }
-    .switch input:checked + i { background: #ff7a2f; }
-    .switch input:checked + i::after { transform: translateX(-16px); }
-    .drop { border: 1.5px dashed rgba(255,255,255,.18); border-radius: 18px; padding: 18px; text-align: center; transition: .3s; cursor: pointer; position: relative; }
-    .drop:hover, .drop.over { border-color: rgba(255,46,126,.6); background: rgba(255,46,126,.06); }
-    .drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-    .drop.done { border-style: solid; border-color: rgba(47,227,154,.5); }
-    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-bottom: 14px; }
-    .steps ol { padding-right: 18px; color: var(--muted); font-size: 13px; }
-    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin: 14px 0; }
-    .kpi { padding: 14px 16px; }
-    .kpi b { display: block; font-size: 28px; font-weight: 900; }
-    .kpi span { color: var(--muted); font-size: 12.5px; }
-    .list { max-height: 50vh; overflow: auto; border-radius: 16px; background: rgba(0,0,0,.25); padding: 6px; margin-top: 10px; }
-    .row { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 12px; cursor: pointer; }
-    .row:hover { background: rgba(255,255,255,.04); }
-    .row input { width: 17px; height: 17px; accent-color: #ff7a2f; flex: none; }
-    .row .id { direction: ltr; font-variant-numeric: tabular-nums; color: var(--muted); font-size: 12.5px; }
-    .bar { position: sticky; bottom: 0; margin-top: 14px; padding: 12px; border-radius: 18px; background: rgba(10,9,18,.9); border: 1px solid var(--card-b); backdrop-filter: blur(12px); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-    .note { font-size: 12.5px; color: #ffd28a; background: rgba(255,173,31,.1); border: 1px solid rgba(255,173,31,.35); border-radius: 12px; padding: 10px 12px; margin-top: 12px; }
-  </style>
+  <link rel="stylesheet" href="dark.css">
 </head>
 <body>
   <div class="aurora"><i></i><i></i></div>
@@ -128,5 +90,6 @@
     </section>
   </div>
   <script src="archive.js"></script>
+  <script src="runpanel.js"></script>
 </body>
 </html>

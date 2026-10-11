@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "X Auto Liker",
-  "version": "5.1.0",
+  "version": "6.0.0",
   "description": "جعبه‌ابزار فارسی X: لایک نوبتی، فونت فارسی، دانلود عکس و ویدیو، عکس از توییت، پوشه‌بندی، قالب متن، آمار توییت‌ها و فالوبک‌یاب با آرشیو X.",
   "permissions": [
     "tabs",
@@ -45,7 +45,8 @@
         "content/tweet-tools.js",
         "content/card.js",
         "content/composer.js",
-        "content/analytics-collect.js"
+        "content/analytics-collect.js",
+        "content/sync.js"
       ],
       "run_at": "document_idle"
     }

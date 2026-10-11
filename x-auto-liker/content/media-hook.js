@@ -34,6 +34,12 @@
           verified: !!(o.is_blue_verified || L.verified),
           locked: !!(L.protected ?? o.privacy?.protected),
           noAvatar: !avatar || /default_profile/.test(avatar),
+          followers: L.followers_count ?? 0,
+          friends: L.friends_count ?? 0,
+          posts: L.statuses_count ?? 0,
+          location: (typeof o.location === 'object' ? o.location?.location : o.location) || L.location || '',
+          createdAt: L.created_at || C.created_at || '',
+          id: o.rest_id,
         });
       }
       for (const k in o) walk(o[k], depth + 1);
@@ -72,13 +78,38 @@
 
   const isApi = (url) => /\/i\/api\/|\/graphql\//.test(url || '');
 
+  // The last Following / Followers request the page made (address + headers), so a sync can ask for
+  // the next pages exactly the way X's own page does.
+  const lastReq = {};
+  const headersToObj = (h) => {
+    const o = {};
+    if (!h) return o;
+    if (typeof Headers !== 'undefined' && h instanceof Headers) h.forEach((v, k) => { o[k] = v; });
+    else if (Array.isArray(h)) h.forEach(([k, v]) => { o[k] = v; });
+    else Object.assign(o, h);
+    return o;
+  };
+  function captureReq(url, headers) {
+    try {
+      const m = /\/graphql\/[^/]+\/(Following|Followers)(?:\?|$)/.exec(String(url));
+      if (m) lastReq[m[1].toLowerCase()] = { url: new URL(url, location.origin).href, headers: headersToObj(headers) };
+    } catch { /* ignore */ }
+  }
+
   const origOpen = XMLHttpRequest.prototype.open;
   XMLHttpRequest.prototype.open = function (method, url, ...rest) {
     this.__xalUrl = url;
+    this.__xalHeaders = {};
     return origOpen.call(this, method, url, ...rest);
+  };
+  const origSetHeader = XMLHttpRequest.prototype.setRequestHeader;
+  XMLHttpRequest.prototype.setRequestHeader = function (k, v) {
+    if (this.__xalHeaders) this.__xalHeaders[k] = v;
+    return origSetHeader.call(this, k, v);
   };
   const origSend = XMLHttpRequest.prototype.send;
   XMLHttpRequest.prototype.send = function (...args) {
+    captureReq(this.__xalUrl, this.__xalHeaders);
     if (isApi(String(this.__xalUrl))) {
       this.addEventListener('load', () => {
         try {
@@ -92,6 +123,10 @@
 
   const origFetch = window.fetch;
   window.fetch = async function (...args) {
+    try {
+      const first = args[0];
+      captureReq(typeof first === 'string' ? first : first?.url, args[1]?.headers || first?.headers);
+    } catch { /* ignore */ }
     const res = await origFetch.apply(this, args);
     try {
       const url = typeof args[0] === 'string' ? args[0] : args[0]?.url;
@@ -99,4 +134,69 @@
     } catch { /* ignore */ }
     return res;
   };
+
+  /* ───────────── list sync ─────────────
+     Pages through the Following / Followers list with the same request X's page uses, a few accounts per
+     call, with pauses. Read-only. Stops at once on a rate limit, an auth error, or when asked. */
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  function bottomCursor(json) {
+    let found = null;
+    const seen = new WeakSet();
+    const walk = (o, d) => {
+      if (found || !o || typeof o !== 'object' || d > 60 || seen.has(o)) return;
+      seen.add(o);
+      if (o.cursorType === 'Bottom' && o.value) { found = o.value; return; }
+      if (typeof o.entryId === 'string' && o.entryId.startsWith('cursor-bottom') && o.content?.value) { found = o.content.value; return; }
+      for (const k in o) walk(o[k], d + 1);
+    };
+    walk(json, 0);
+    return found;
+  }
+
+  let syncing = null;
+  async function runSync(type) {
+    const post = (m) => window.postMessage({ __xal: 'sync', type, ...m }, location.origin);
+    const job = (syncing = { stop: false });
+    // wait for the page's own first request for this list
+    for (let i = 0; i < 40 && !lastReq[type] && !job.stop; i++) await sleep(500);
+    const req = lastReq[type];
+    if (!req) return post({ state: 'done', reason: 'no_request', users: [] });
+
+    const all = new Map();
+    let cursor = null, idle = 0, pages = 0, reason = 'end';
+    while (!job.stop && pages < 400) {
+      const u = new URL(req.url);
+      let vars = {};
+      try { vars = JSON.parse(u.searchParams.get('variables') || '{}'); } catch { /* keep empty */ }
+      if (cursor) vars.cursor = cursor; else delete vars.cursor;
+      u.searchParams.set('variables', JSON.stringify(vars));
+      let res;
+      try { res = await origFetch(u.href, { headers: req.headers, credentials: 'include' }); }
+      catch { reason = 'network'; break; }
+      if (res.status === 429) { reason = 'rate_limit'; break; }
+      if (res.status === 401 || res.status === 403) { reason = 'auth'; break; }
+      if (!res.ok) { reason = 'error'; break; }
+      let json;
+      try { json = await res.json(); } catch { reason = 'error'; break; }
+      pages++;
+      const before = all.size;
+      for (const user of collectUsers(json)) if (user.handle) all.set(user.handle.toLowerCase(), user);
+      idle = all.size > before ? 0 : idle + 1;
+      post({ state: 'progress', count: all.size, pages });
+      const next = bottomCursor(json);
+      if (!next || next === cursor || idle >= 2) break;
+      if (Number(res.headers.get('x-rate-limit-remaining')) === 1) { reason = 'rate_limit_soon'; break; }
+      cursor = next;
+      await sleep(700 + Math.random() * 700); // pause between calls
+    }
+    if (job.stop) reason = 'stopped';
+    syncing = null;
+    post({ state: 'done', reason, users: [...all.values()] });
+  }
+
+  window.addEventListener('message', (e) => {
+    if (e.source !== window) return;
+    if (e.data?.__xal === 'syncStart' && !syncing && (e.data.type === 'following' || e.data.type === 'followers')) runSync(e.data.type);
+    if (e.data?.__xal === 'syncStop' && syncing) syncing.stop = true;
+  });
 })();
