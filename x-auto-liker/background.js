@@ -545,8 +545,9 @@ async function aiTranslate({ id, text }) {
   return { ok: false, code: 'failed', error: lastError };
 }
 
-async function aiComments({ tweet, extra }) {
-  const cfg = await aiSettings();
+async function aiComments({ tweet, extra, count }) {
+  const cfg = { ...(await aiSettings()) };
+  if (count) cfg.count = count;
   if (!cfg.apiKey) return { ok: false, code: 'no_key', error: 'کلید OpenRouter ثبت نشده است. از «تنظیمات» وارد کنید.' };
   const candidates = await aiCandidates(cfg);
   const prompt = aiBuildPrompt(cfg, tweet, extra);
