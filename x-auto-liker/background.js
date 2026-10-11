@@ -614,6 +614,39 @@ async function sorsaScore(handle) {
   return r;
 }
 
+// 7 / 30-day change: shape not documented here, so look for numbers whose key mentions 7 or 30.
+function sorsaPickChanges(d) {
+  const out = { d7: null, d30: null };
+  const walk = (o, path) => {
+    if (o === null || o === undefined) return;
+    if (typeof o === 'object') { for (const [k, v] of Object.entries(o)) walk(v, `${path}.${k}`); return; }
+    const n = Number(o);
+    if (o === '' || !isFinite(n)) return;
+    if (out.d7 === null && /(^|[^0-9])7([^0-9]|$)/.test(path)) out.d7 = n;
+    else if (out.d30 === null && /(^|[^0-9])30([^0-9]|$)/.test(path)) out.d30 = n;
+  };
+  walk(d, '');
+  return out;
+}
+async function sorsaChanges(handle) {
+  const { sorsa = {}, sorsaCache = {} } = await chrome.storage.local.get(['sorsa', 'sorsaCache']);
+  if (!sorsa.enabled || !sorsa.key) return { ok: false, code: 'off' };
+  const k = String(handle).toLowerCase();
+  const hit = sorsaCache[k];
+  if (hit?.ch && Date.now() - hit.chAt < 12 * 3600e3) return { ok: true, ...hit.ch, cached: true };
+  const res = await fetch(`${SORSA}/score-changes?username=${encodeURIComponent(handle)}`, { headers: { ApiKey: sorsa.key, Accept: 'application/json' } });
+  if (res.status === 401 || res.status === 403) return { ok: false, code: 'auth', error: 'کلید Sorsa معتبر نیست.' };
+  if (res.status === 402 || res.status === 429) return { ok: false, code: 'limit', error: 'سقف یا اعتبار Sorsa تمام شده است.' };
+  if (!res.ok) return res.status === 404 ? { ok: true, d7: null, d30: null } : { ok: false, code: 'failed', error: `خطای Sorsa ${res.status}` };
+  let data = null;
+  try { data = await res.json(); } catch { /* none */ }
+  const ch = sorsaPickChanges(data);
+  const cur = (await chrome.storage.local.get('sorsaCache')).sorsaCache || {};
+  cur[k] = { ...(cur[k] || { score: null, at: Date.now() }), ch, chAt: Date.now() };
+  await chrome.storage.local.set({ sorsaCache: cur });
+  return { ok: true, ...ch };
+}
+
 let missQueue = Promise.resolve();
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === 'i18nMiss') {
@@ -626,6 +659,10 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   }
   if (msg.type === 'sorsaScore') {
     sorsaScore(msg.handle).then(sendResponse, (e) => sendResponse({ ok: false, code: 'failed', error: e.message }));
+    return true;
+  }
+  if (msg.type === 'sorsaChanges') {
+    sorsaChanges(msg.handle).then(sendResponse, (e) => sendResponse({ ok: false, code: 'failed', error: e.message }));
     return true;
   }
   if (msg.type === 'sorsaTest') {

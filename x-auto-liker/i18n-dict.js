@@ -539,5 +539,7 @@ window.XI_DICT = {
  "سقف یا اعتبار Sorsa تمام شده است.": "Sorsa limit or credit is used up.",
  "امتیازی برای این حساب پیدا نشد": "No score found for this account",
  "✓ کلید معتبر است (نمونه: {n})": "✓ Key is valid (sample: {n})",
- "✓ کلید معتبر است": "✓ Key is valid"
+ "✓ کلید معتبر است": "✓ Key is valid",
+ "{n} روز اخیر": "Last {n} days",
+ "قدرت‌گرفته از Sorsa": "Powered by Sorsa"
 };

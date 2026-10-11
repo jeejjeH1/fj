@@ -294,9 +294,6 @@
       border: 1px solid rgba(255,46,126,.45); background: rgba(255,46,126,.08); color: #ff4f93; font: 700 12px XalVaz, sans-serif; white-space: nowrap; }
     .xal-cbtn:hover { background: rgba(255,46,126,.16); }
     .xal-count { font: 700 12px XalVaz, sans-serif; color: rgb(113,118,123); margin: 0 6px; white-space: nowrap; direction: rtl; }
-    .xal-sorsa { display: inline-flex; align-items: center; gap: 6px; margin: 4px 0 6px; padding: 2px 10px; border-radius: 99px; border: 1px solid rgba(162,75,255,.5);
-      background: rgba(162,75,255,.1); color: #c9a2ff; font: 700 12px XalVaz, sans-serif; direction: ltr; }
-    .xal-sorsa[data-state="err"] { border-color: rgba(255,173,31,.5); background: rgba(255,173,31,.08); color: #ffd28a; }
     .xal-count.warn { color: #ffad1f; } .xal-count.over { color: #f4212e; }`;
   (document.head || document.documentElement).appendChild(xs);
 
