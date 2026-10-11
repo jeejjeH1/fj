@@ -25,6 +25,8 @@
     document.execCommand('insertText', false, text);
   }
 
+  XAL.insertText = insert; // used by the comment suggestions: puts text in a composer, never sends
+
   async function getStore() {
     const { templates = [], drafts = [] } = await chrome.storage.local.get(['templates', 'drafts']);
     return { templates, drafts };

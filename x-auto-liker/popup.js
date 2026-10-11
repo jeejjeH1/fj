@@ -26,12 +26,17 @@ function setNav(t) {
   document.documentElement.classList.toggle('wide', t === 'manage');
   render(state);
 }
-function openManage() {
+// the wide embedded view shows one of the extension pages inside the window
+let embedSrc = 'pages/following.html?embed=1';
+function openManage(src = 'pages/following.html?embed=1') {
   const fr = $('manageFrame');
-  if (!fr.getAttribute('src')) fr.setAttribute('src', 'pages/following.html?embed=1');
+  if (fr.getAttribute('src') !== src) fr.setAttribute('src', src);
+  embedSrc = src;
+  try { localStorage.setItem('embedSrc', src); } catch { /* ignore */ }
   setNav('manage');
 }
-$('openManage').addEventListener('click', openManage);
+$('openManage').addEventListener('click', () => openManage('pages/following.html?embed=1'));
+$('openAi').addEventListener('click', () => openManage('pages/ai.html?embed=1'));
 $('manageBack').addEventListener('click', () => setNav('tools'));
 els.navtabs.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => setNav(b.dataset.tab)));
 
@@ -444,7 +449,7 @@ async function init() {
   onTimingChange();
   updateCount();
   state = runState;
-  if (navTab === 'manage') openManage(); else setNav(navTab);
+  if (navTab === 'manage') { let s = 'pages/following.html?embed=1'; try { s = localStorage.getItem('embedSrc') || s; } catch { /* ignore */ } openManage(s); } else setNav(navTab);
   requestAnimationFrame(tick);
   requestAnimationFrame(animateFx);
 }

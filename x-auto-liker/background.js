@@ -426,8 +426,123 @@ chrome.tabs.onRemoved.addListener(async (tabId) => {
 
 chrome.commands.onCommand.addListener((cmd) => { if (cmd === 'next-link') manualNext(); });
 
+
+/* ───────────── AI comments (OpenRouter) ─────────────
+   Runs here, not in the X page, so the key never reaches X and X's content rules do not apply. */
+const OR = 'https://openrouter.ai/api/v1';
+const AI_DEFAULTS = {
+  apiKey: '', model: 'auto', count: 10, lang: 'auto', temperature: 0.9,
+  prompt: `تو یک کاربر باهوش، دوستانه و خوش‌سلیقه‌ی X (توییتر) هستی. برای توییت زیر {{count}} کامنت متفاوت بنویس.
+
+قواعد:
+- هر کامنت کوتاه و طبیعی باشد (حداکثر ۲۰۰ کاراکتر)، شبیه آدم واقعی، نه ربات.
+- متنوع باشند: موافقت، سؤال، نکته‌ی تازه، شوخی ملایم، تجربه‌ی شخصی.
+- بدون هشتگ، بدون لینک، بدون تعریف‌های اغراق‌آمیز و کلیشه‌ای.
+- فقط به محتوای خود توییت جواب بده.
+زبان کامنت‌ها: {{lang}}`,
+};
+// Free models change often, so the list is read live; these name patterns rank the good ones first.
+const AI_PREFER = [/gpt-oss-120b/, /llama-3\.3-70b/, /deepseek.*(v3|chat)/, /qwen3.*(235|480|32)/, /llama-4/, /gemini.*(2\.5|2\.0|flash)/, /qwen.*72b/, /gemma-3-27b/, /mistral.*(small|large|medium)/, /gemma-3/, /llama-3\.1-405b/];
+const AI_AVOID = /(r1|reasoning|thinking|coder|vision|\bvl\b|embed|image|moderation|guard|safety|audio|tts|whisper)/i;
+const AI_FALLBACK = ['meta-llama/llama-3.3-70b-instruct:free', 'deepseek/deepseek-chat-v3-0324:free', 'qwen/qwen-2.5-72b-instruct:free', 'google/gemma-3-27b-it:free'];
+
+async function aiSettings() {
+  const { ai } = await chrome.storage.local.get('ai');
+  return { ...AI_DEFAULTS, ...(ai || {}) };
+}
+
+async function aiFreeModels(force = false) {
+  const { aiModelCache } = await chrome.storage.local.get('aiModelCache');
+  if (!force && aiModelCache && Date.now() - aiModelCache.at < 6 * 3600e3) return aiModelCache.list;
+  const res = await fetch(`${OR}/models`);
+  if (!res.ok) throw new Error(`models ${res.status}`);
+  const data = (await res.json()).data || [];
+  const free = data.filter((m) => String(m.pricing?.prompt) === '0' && String(m.pricing?.completion) === '0'
+    && (!m.architecture?.output_modalities || m.architecture.output_modalities.includes('text')) && (m.context_length || 0) >= 8000);
+  const score = (m) => { const i = AI_PREFER.findIndex((re) => re.test(m.id)); return (i < 0 ? 100 : i) * 1e6 - (m.context_length || 0) + (AI_AVOID.test(m.id) ? 1e9 : 0); };
+  const list = free.sort((a, b) => score(a) - score(b)).map((m) => ({ id: m.id, name: m.name || m.id, ctx: m.context_length || 0 }));
+  await chrome.storage.local.set({ aiModelCache: { at: Date.now(), list } });
+  return list;
+}
+
+function aiBuildPrompt(cfg, tweet, extra) {
+  const lang = { auto: 'همان زبان توییت', en: 'انگلیسی', fa: 'فارسی' }[cfg.lang] || cfg.lang;
+  const body = cfg.prompt.replaceAll('{{count}}', cfg.count).replaceAll('{{lang}}', lang).replaceAll('{{author}}', tweet.name ? `${tweet.name} (@${tweet.handle})` : `@${tweet.handle}`).replaceAll('{{tweet}}', tweet.text);
+  const hasTweet = cfg.prompt.includes('{{tweet}}');
+  return `${body}${hasTweet ? '' : `\n\nتوییت از ${tweet.name || ''} (@${tweet.handle}):\n"""\n${tweet.text}\n"""`}${extra ? `\n\nدستور اضافه برای این بار: ${extra}` : ''}
+
+خروجی را فقط به این شکل بده، بدون هیچ توضیح یا متن دیگری و بدون markdown:
+یک آرایه‌ی JSON با دقیقاً ${cfg.count} شیء به شکل {"text": "متن کامنت", "fa": "ترجمه‌ی فارسی همین کامنت"}.
+اگر خود کامنت فارسی است، مقدار "fa" را رشته‌ی خالی بگذار.`;
+}
+
+// Models answer in many shapes: fenced JSON, an object holding the array, or numbered lines.
+function aiParse(text) {
+  const t = String(text || '').replace(/```(?:json)?/gi, '').trim();
+  const tryJson = (s) => { try { return JSON.parse(s); } catch { return null; } };
+  let v = tryJson(t);
+  if (!v) { const a = t.indexOf('['), b = t.lastIndexOf(']'); if (a >= 0 && b > a) v = tryJson(t.slice(a, b + 1)); }
+  if (!v) { const a = t.indexOf('{'), b = t.lastIndexOf('}'); if (a >= 0 && b > a) v = tryJson(t.slice(a, b + 1)); }
+  if (v && !Array.isArray(v)) v = v.comments || v.items || v.replies || Object.values(v).find(Array.isArray);
+  if (Array.isArray(v)) {
+    const out = v.map((x) => (typeof x === 'string' ? { text: x, fa: '' } : { text: String(x.text || x.comment || x.reply || '').trim(), fa: String(x.fa || x.persian || x.translation || '').trim() })).filter((x) => x.text);
+    if (out.length) return out;
+  }
+  const lines = t.split('\n').map((l) => l.replace(/^\s*(?:\d+[.)\-]|[-*•])\s*/, '').trim()).filter((l) => l.length > 3);
+  return lines.map((l) => { const [text, fa] = l.split(/\s*(?:\|\||\|\|\||—\s*fa:|\s-\s(?=[؀-ۿ]))\s*/); return { text: (text || '').replace(/^["“]|["”]$/g, ''), fa: fa || '' }; }).filter((x) => x.text);
+}
+
+async function aiComments({ tweet, extra }) {
+  const cfg = await aiSettings();
+  if (!cfg.apiKey) return { ok: false, code: 'no_key', error: 'کلید OpenRouter ثبت نشده است. از «تنظیمات» وارد کنید.' };
+  let candidates;
+  if (cfg.model && cfg.model !== 'auto') candidates = [cfg.model];
+  else {
+    try { candidates = (await aiFreeModels()).slice(0, 5).map((m) => m.id); } catch { candidates = []; }
+    if (!candidates.length) candidates = AI_FALLBACK;
+  }
+  const prompt = aiBuildPrompt(cfg, tweet, extra);
+  let lastError = 'پاسخی از مدل‌ها نیامد.';
+  for (const model of candidates) {
+    try {
+      const res = await fetch(`${OR}/chat/completions`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${cfg.apiKey}`, 'Content-Type': 'application/json', 'HTTP-Referer': 'https://x.com', 'X-Title': 'X Auto Liker' },
+        body: JSON.stringify({ model, temperature: cfg.temperature, max_tokens: 2400, messages: [{ role: 'user', content: prompt }] }),
+      });
+      if (res.status === 401 || res.status === 403) return { ok: false, code: 'auth', error: 'کلید OpenRouter معتبر نیست.' };
+      if (res.status === 402) return { ok: false, code: 'credit', error: 'اعتبار OpenRouter کافی نیست (این مدل رایگان نبود یا سقف رایگان پر شده).' };
+      if (!res.ok) { lastError = `${model}: خطای ${res.status}`; continue; } // 404 / 429 / 5xx: try the next model
+      const data = await res.json();
+      if (data.error) { lastError = `${model}: ${data.error.message || 'خطا'}`; continue; }
+      const items = aiParse(data.choices?.[0]?.message?.content);
+      if (items.length >= 2) return { ok: true, model, items: items.slice(0, Math.max(cfg.count, 1)) };
+      lastError = `${model}: پاسخ قابل‌خواندن نبود`;
+    } catch (e) { lastError = `${model}: ${e.message}`; }
+  }
+  return { ok: false, code: 'failed', error: lastError };
+}
+
+async function aiTestKey(key) {
+  const res = await fetch(`${OR}/auth/key`, { headers: { Authorization: `Bearer ${key}` } });
+  if (!res.ok) return { ok: false, error: res.status === 401 ? 'کلید معتبر نیست.' : `خطای ${res.status}` };
+  const d = (await res.json()).data || {};
+  return { ok: true, label: d.label || '', free: !!d.is_free_tier, usage: d.usage };
+}
+
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-  if (msg.type === 'syncWho') {
+  if (msg.type === 'aiComments') {
+    aiComments(msg).then(sendResponse, (e) => sendResponse({ ok: false, code: 'failed', error: e.message }));
+    return true;
+  } else if (msg.type === 'aiModels') {
+    aiFreeModels(!!msg.force).then((list) => sendResponse({ ok: true, list }), (e) => sendResponse({ ok: false, error: e.message }));
+    return true;
+  } else if (msg.type === 'aiTestKey') {
+    aiTestKey(msg.key).then(sendResponse, (e) => sendResponse({ ok: false, error: e.message }));
+    return true;
+  } else if (msg.type === 'aiDefaults') {
+    sendResponse({ defaults: AI_DEFAULTS });
+  } else if (msg.type === 'syncWho') {
     chrome.storage.local.get('syncJob').then(({ syncJob }) => {
       const mine = !!syncJob && _sender.tab && syncJob.tabId === _sender.tab.id && Date.now() - syncJob.at < 5 * 60e3;
       sendResponse({ job: mine ? syncJob : null });

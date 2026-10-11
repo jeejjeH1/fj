@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "X Auto Liker",
-  "version": "6.5.0",
-  "description": "جعبه‌ابزار فارسی X: لایک نوبتی، فونت فارسی، دانلود عکس و ویدیو، عکس از توییت، پوشه‌بندی، قالب متن، آمار توییت‌ها و فالوبک‌یاب با آرشیو X.",
+  "version": "7.0.0",
+  "description": "جعبه‌ابزار فارسی X: لایک نوبتی، کامنت هوشمند، فونت فارسی، دانلود، عکس از توییت، پوشه‌بندی، قالب متن، آمار و مدیریت دنبال‌شوندگان.",
   "permissions": [
     "tabs",
     "scripting",
@@ -17,7 +17,8 @@
     "https://mobile.twitter.com/*",
     "https://pbs.twimg.com/*",
     "https://abs.twimg.com/*",
-    "https://video.twimg.com/*"
+    "https://video.twimg.com/*",
+    "https://openrouter.ai/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -48,7 +49,8 @@
         "content/card.js",
         "content/composer.js",
         "content/analytics-collect.js",
-        "content/sync.js"
+        "content/sync.js",
+        "content/comments.js"
       ],
       "run_at": "document_idle"
     }
