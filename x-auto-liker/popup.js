@@ -41,7 +41,7 @@ document.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('clic
 $('openFollow').addEventListener('click', async () => {
   const { me } = await chrome.storage.local.get('me');
   chrome.tabs.create({ url: me ? `https://x.com/${me}/following` : 'https://x.com/home' });
-  if (!me) $('toolsHint').textContent = 'اول X را باز کنید تا حسابتان شناخته شود، بعد دوباره بزنید.';
+  if (!me) $('toolsHint').textContent = 'صفحه‌ی X باز شد. وقتی حسابتان لود شد، دوباره اینجا بزنید.';
 });
 
 /* ───────────── mode switch ───────────── */

@@ -3,9 +3,12 @@
 (() => {
   const { XAL } = window;
 
+  // The page's own address names whose following list this is, so the username is only a cross-check.
+  const pathHandle = () => location.pathname.match(/^\/([A-Za-z0-9_]{1,15})\/following\/?$/)?.[1] || null;
   const onFollowing = () => {
+    const h = pathHandle();
     const me = XAL.me();
-    return !!me && location.pathname.toLowerCase() === `/${me.toLowerCase()}/following`;
+    return !!h && (!me || me.toLowerCase() === h.toLowerCase());
   };
 
   function readCell(cell) {
@@ -50,7 +53,7 @@
 
   XAL.fab('follow', '🔍 فالوبک‌نده‌ها', onFollowing, async () => {
     const { followScan } = await chrome.storage.local.get('followScan');
-    const me = XAL.me();
+    const me = XAL.me() || pathHandle();
     const m = XAL.modal({ title: '🔍 کسانی که فالوبک نداده‌اند', wide: true, onClose: () => { job.stop = true; } });
     const job = { stop: false };
     if (followScan?.handle?.toLowerCase() === me.toLowerCase() && followScan.users?.length) showResults(m, followScan, startScan);

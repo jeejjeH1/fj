@@ -62,7 +62,26 @@
   XAL.openPage = (page) => XAL.bg({ type: 'openPage', page });
 
   /* ── X page readers ───────────────────── */
-  XAL.me = () => document.querySelector('a[data-testid="AppTabBar_Profile_Link"]')?.getAttribute('href')?.slice(1) || null;
+  // Your username. X changes its markup, so try several places; the first that gives a plain handle wins.
+  const NOT_HANDLE = new Set(['home', 'explore', 'notifications', 'messages', 'i', 'search', 'settings', 'compose', 'login', 'logout', 'bookmarks', 'lists', 'communities', 'premium', 'jobs', 'tos', 'privacy']);
+  const plainHandle = (href) => {
+    const m = (href || '').match(/^\/?([A-Za-z0-9_]{1,15})\/?$/);
+    return m && !NOT_HANDLE.has(m[1].toLowerCase()) ? m[1] : null;
+  };
+  XAL.me = () => {
+    const links = [
+      'a[data-testid="AppTabBar_Profile_Link"]',
+      'nav a[aria-label*="Profile" i]', 'nav a[aria-label*="پروفایل"]',
+      'a[data-testid="AppTabBar_Profile_Link"]', 'header a[href^="/"][role="link"][aria-label*="rofile" i]',
+    ];
+    for (const sel of links) {
+      for (const a of document.querySelectorAll(sel)) { const h = plainHandle(a.getAttribute('href')); if (h) return h; }
+    }
+    const sw = document.querySelector('[data-testid="SideNav_AccountSwitcher_Button"]')?.textContent || '';
+    const m = sw.match(/@([A-Za-z0-9_]{1,15})/);
+    if (m) return m[1];
+    return null;
+  };
 
   // Text of a node with emoji <img alt> turned back into characters and links kept readable.
   XAL.richText = (el) => {
