@@ -57,11 +57,14 @@ function navigateAndWait(tabId, url, timeoutMs = 30000) {
       reject(new Error('page load timeout'));
     }, timeoutMs);
     function onUpdated(id, info) {
-      if (id === tabId && info.status === 'complete') {
+      if (id !== tabId || info.status !== 'complete') return;
+      // only the real page counts: a tab starts on about:blank, which can also report "complete"
+      chrome.tabs.get(tabId).then((t) => {
+        if (!t.url || t.url.startsWith('about:')) return;
         clearTimeout(timer);
         chrome.tabs.onUpdated.removeListener(onUpdated);
         resolve();
-      }
+      }, () => {});
     }
     chrome.tabs.onUpdated.addListener(onUpdated);
     chrome.tabs.update(tabId, { url }).catch((e) => {
