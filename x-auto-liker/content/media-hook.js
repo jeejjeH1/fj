@@ -166,6 +166,19 @@
     return found;
   }
 
+  // The signed-in account's username: from X's own page state, or from accounts X has sent us, matched by the twid cookie.
+  function whoami() {
+    try {
+      const st = window.__INITIAL_STATE__;
+      const users = st?.entities?.users?.entities;
+      let id = st?.session?.user_id;
+      if (!id) id = (decodeURIComponent((document.cookie.match(/(?:^|;\s*)twid=([^;]+)/) || [])[1] || '').match(/u=(\d+)/) || [])[1];
+      if (id && users?.[id]?.screen_name) return users[id].screen_name;
+      if (id) for (const u of usersBuf.values()) if (String(u.id) === String(id)) return u.handle;
+    } catch { /* ignore */ }
+    return null;
+  }
+
   let syncing = null;
   async function runSync(type) {
     const post = (m) => window.postMessage({ __xal: 'sync', type, ...m }, location.origin);
@@ -210,6 +223,7 @@
 
   window.addEventListener('message', (e) => {
     if (e.source !== window) return;
+    if (e.data?.__xal === 'whoami') window.postMessage({ __xal: 'me', handle: whoami() }, location.origin);
     if (e.data?.__xal === 'ping') window.postMessage({ __xal: 'pong', seen: seenOps.slice(), have: Object.keys(lastReq) }, location.origin);
     if (e.data?.__xal === 'syncStart' && !syncing && (e.data.type === 'following' || e.data.type === 'followers')) runSync(e.data.type);
     if (e.data?.__xal === 'syncStop' && syncing) syncing.stop = true;

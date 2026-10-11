@@ -57,7 +57,12 @@ function rows() {
   return out.sort(sorts[$('sort').value] || sorts['fol-asc']);
 }
 
+function drawMe() {
+  $('meBox').hidden = !!me;
+}
+
 function drawHeader() {
+  drawMe();
   const d = data[tab === 'unfollowed' ? 'followers' : tab];
   $('syncInfo').textContent = d ? `آخرین همگام‌سازی ${tab === 'following' ? 'دنبال‌شوندگان' : 'دنبال‌کنندگان'}: ${new Date(d.at).toLocaleString('fa-IR')} · ${fa(d.users.length)} حساب` : 'هنوز همگام‌سازی نشده';
   document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
@@ -163,9 +168,19 @@ $('csv').addEventListener('click', () => {
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = `${tab}.csv`; a.click();
 });
 
+$('meSave').addEventListener('click', async () => {
+  const raw = $('meInput').value.trim();
+  const m = raw.match(/^(?:https?:\/\/)?(?:www\.)?(?:x|twitter)\.com\/([A-Za-z0-9_]{1,15})(?:[/?#].*)?$/i) || raw.match(/^@?([A-Za-z0-9_]{1,15})$/);
+  if (!m) return toast('نام کاربری معتبر نیست؛ مثل @username');
+  await chrome.storage.local.set({ me: m[1] });
+  me = m[1];
+  drawMe(); drawHeader();
+  toast('ذخیره شد ✓ حالا همگام‌سازی را بزنید');
+});
+
 // The sync reads from an X page, so it runs in a background tab that closes itself; progress shows here.
 $('syncBtn').addEventListener('click', async () => {
-  if (!me) { toast('اول x.com را باز کنید و وارد شوید تا حسابتان شناخته شود'); chrome.tabs.create({ url: 'https://x.com/home' }); return; }
+  if (!me) { toast('اول نام کاربری‌تان را بنویسید'); $('meBox').hidden = false; $('meInput').focus(); return; }
   const type = tab === 'followers' || tab === 'unfollowed' ? 'followers' : 'following';
   await chrome.storage.local.remove('syncDiag');
   await chrome.storage.local.set({ syncState: { type, state: 'running', count: 0, at: Date.now() } });

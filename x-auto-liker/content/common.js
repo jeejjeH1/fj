@@ -68,6 +68,7 @@
     const m = (href || '').match(/^\/?([A-Za-z0-9_]{1,15})\/?$/);
     return m && !NOT_HANDLE.has(m[1].toLowerCase()) ? m[1] : null;
   };
+  XAL._hookMe = null;
   XAL.me = () => {
     const links = [
       'a[data-testid="AppTabBar_Profile_Link"]',
@@ -80,8 +81,22 @@
     const sw = document.querySelector('[data-testid="SideNav_AccountSwitcher_Button"]')?.textContent || '';
     const m = sw.match(/@([A-Za-z0-9_]{1,15})/);
     if (m) return m[1];
-    return null;
+    return XAL._hookMe;
   };
+  // Mobile layout has none of those links, so also ask X's own page state who is signed in (retry while it loads).
+  window.addEventListener('message', (e) => {
+    if (e.source === window && e.data?.__xal === 'me' && e.data.handle) {
+      XAL._hookMe = e.data.handle;
+      chrome.storage.local.set({ me: e.data.handle }); // keep it for the extension window
+    }
+  });
+  let asked = 0;
+  const askMe = () => {
+    if (XAL.me() || asked++ > 25) return;
+    window.postMessage({ __xal: 'whoami' }, location.origin);
+    setTimeout(askMe, 1500);
+  };
+  askMe();
 
   // Text of a node with emoji <img alt> turned back into characters and links kept readable.
   XAL.richText = (el) => {
