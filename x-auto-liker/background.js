@@ -111,31 +111,49 @@ async function tweetActionInPage(statusId, action) {
 }
 
 // Injected into a profile page (unfollow queue). Same contract as tweetActionInPage.
+// The follow button is found by its data-testid when X provides one, and otherwise by its
+// visible text / label (Following / Follow, in English or Persian), so it survives markup changes.
 async function profileActionInPage(handle, action) {
+  function followStateInPage() {
+    const scope = document.querySelector('[data-testid="placementTracking"]') ||
+      document.querySelector('[data-testid="userActions"]') || document.querySelector('main') || document;
+    const norm = (t) => (t || '').replace(/\s+/g, ' ').trim();
+    // skip the confirmation dialog's own buttons and anything hidden
+    const btns = [...scope.querySelectorAll('button, [role="button"]')]
+      .filter((b) => b.offsetParent !== null && !b.closest('[role="dialog"], [role="alertdialog"]'));
+    const label = (b) => norm(b.getAttribute('aria-label') || b.textContent);
+    const unf = btns.find((b) => /-unfollow$/.test(b.dataset.testid || '') || /^(Following|Unfollow|دنبال می‌کنید)$/i.test(label(b)));
+    if (unf) return { state: 'following', button: unf };
+    const fol = btns.find((b) => /-follow$/.test(b.dataset.testid || '') || /^(Follow|دنبال کردن)$/i.test(label(b)));
+    if (fol) return { state: 'follow', button: fol };
+    return { state: null };
+  }
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-  const header = () => document.querySelector('[data-testid="placementTracking"]') || document;
   const deadline = Date.now() + 20000;
   while (Date.now() < deadline) {
     if (location.pathname.startsWith('/i/flow/login') || document.querySelector('[data-testid="loginButton"]')) {
       return { result: 'error', detail: 'not logged in', fatal: true };
     }
     if (document.querySelector('[data-testid="emptyState"]')) return { result: 'error', detail: 'account not found' };
-    const unfollow = header().querySelector('[data-testid$="-unfollow"]');
-    const follow = header().querySelector('[data-testid$="-follow"]');
-    if (follow && !unfollow) return { result: 'already' }; // not following anymore
-    if (unfollow) {
+    const st = followStateInPage();
+    if (st.state === 'follow') return { result: 'already' }; // not following anymore
+    if (st.state === 'following') {
       if (action === 'find') return { result: 'ready' };
-      unfollow.click();
+      st.button.click();
       for (let i = 0; i < 20; i++) {
         await sleep(250);
-        document.querySelector('[data-testid="confirmationSheetConfirm"]')?.click();
-        if (header().querySelector('[data-testid$="-follow"]') && !header().querySelector('[data-testid$="-unfollow"]')) return { result: 'unfollowed' };
+        // confirmation sheet: X's own confirm button, or a dialog button labelled Unfollow / آنفالو
+        const sheet = document.querySelector('[data-testid="confirmationSheetConfirm"]') ||
+          [...document.querySelectorAll('[role="dialog"] button, [role="alertdialog"] button')]
+            .find((b) => /^(Unfollow|آنفالو)$/i.test((b.textContent || '').trim()));
+        sheet?.click();
+        if (followStateInPage().state === 'follow') return { result: 'unfollowed' };
       }
       return { result: 'error', detail: 'unfollow not confirmed' };
     }
     await sleep(500);
   }
-  return { result: 'error', detail: 'profile not loaded' };
+  return { result: 'error', detail: 'follow button not found' };
 }
 
 const KIND = {
@@ -270,10 +288,24 @@ async function readLikeStateInPage(statusId) {
 
 // Injected: reads (never clicks) whether you still follow this profile.
 async function readFollowStateInPage() {
+  function followStateInPage() {
+    const scope = document.querySelector('[data-testid="placementTracking"]') ||
+      document.querySelector('[data-testid="userActions"]') || document.querySelector('main') || document;
+    const norm = (t) => (t || '').replace(/\s+/g, ' ').trim();
+    // skip the confirmation dialog's own buttons and anything hidden
+    const btns = [...scope.querySelectorAll('button, [role="button"]')]
+      .filter((b) => b.offsetParent !== null && !b.closest('[role="dialog"], [role="alertdialog"]'));
+    const label = (b) => norm(b.getAttribute('aria-label') || b.textContent);
+    const unf = btns.find((b) => /-unfollow$/.test(b.dataset.testid || '') || /^(Following|Unfollow|دنبال می‌کنید)$/i.test(label(b)));
+    if (unf) return { state: 'following', button: unf };
+    const fol = btns.find((b) => /-follow$/.test(b.dataset.testid || '') || /^(Follow|دنبال کردن)$/i.test(label(b)));
+    if (fol) return { state: 'follow', button: fol };
+    return { state: null };
+  }
   for (let i = 0; i < 6; i++) {
-    const h = document.querySelector('[data-testid="placementTracking"]') || document;
-    if (h.querySelector('[data-testid$="-unfollow"]')) return 'skipped';
-    if (h.querySelector('[data-testid$="-follow"]')) return 'unfollowed';
+    const st = followStateInPage();
+    if (st.state === 'following') return 'skipped';
+    if (st.state === 'follow') return 'unfollowed';
     await new Promise((r) => setTimeout(r, 250));
   }
   return 'skipped';
