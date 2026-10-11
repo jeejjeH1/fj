@@ -32,21 +32,37 @@
     };
   }
 
+  // X loads the Following list when the page opens, so accounts are kept from then on. They are reset
+  // only when you move to another page, so nothing from a different list gets mixed in.
+  let usersPath = location.pathname;
+  XAL.onScan(() => {
+    if (location.pathname === usersPath) return;
+    usersPath = location.pathname;
+    XAL.users.clear();
+    window.postMessage({ __xal: 'resetUsers' }, location.origin);
+  });
+
+  // Reads the Following list. X's own responses carry each account's follow relationship, so those are
+  // used first; the on-screen cells fill in anything X did not send. Bigger scroll steps, and it
+  // stops after several scrolls with nothing new.
   async function scan(onProgress, job) {
     const users = new Map();
+    const fromDom = (cell) => { const u = readCell(cell); if (u && !users.has(u.handle.toLowerCase())) users.set(u.handle.toLowerCase(), u); };
     let idle = 0;
     scrollTo(0, 0);
-    await XAL.sleep(800);
-    while (!job.stop && idle < 6 && users.size < 8000) {
-      let added = 0;
-      document.querySelectorAll('[data-testid="primaryColumn"] [data-testid="UserCell"]').forEach((cell) => {
-        const u = readCell(cell);
-        if (u && !users.has(u.handle.toLowerCase())) { users.set(u.handle.toLowerCase(), u); added++; }
-      });
-      idle = added ? 0 : idle + 1;
+    await XAL.sleep(500);
+    while (!job.stop && idle < 5 && users.size < 8000) {
+      const before = users.size;
+      document.querySelectorAll('[data-testid="primaryColumn"] [data-testid="UserCell"]').forEach(fromDom);
+      for (const [k, u] of XAL.users) {
+        if (u.following === false || users.has(k)) continue;
+        users.set(k, { handle: u.handle, name: u.name || u.handle, bio: u.bio || '', avatar: u.avatar || '',
+          followsYou: !!u.followsYou, verified: !!u.verified, locked: !!u.locked, noAvatar: !!u.noAvatar });
+      }
+      idle = users.size > before ? 0 : idle + 1;
       onProgress(users.size);
-      scrollBy(0, innerHeight * 0.9);
-      await XAL.sleep(idle ? 1400 : 900);
+      scrollBy(0, innerHeight * 2);
+      await XAL.sleep(idle ? 1000 : 500);
     }
     return [...users.values()];
   }

@@ -6,6 +6,42 @@
   if (window.__xalMediaHook) return;
   window.__xalMediaHook = true;
 
+  // Accounts seen so far, kept so the content script can ask for them after it has loaded.
+  const usersBuf = new Map();
+  window.addEventListener('message', (e) => {
+    if (e.source !== window) return;
+    if (e.data?.__xal === 'replayUsers') window.postMessage({ __xal: 'users', users: [...usersBuf.values()] }, location.origin);
+    if (e.data?.__xal === 'resetUsers') usersBuf.clear();
+  });
+
+  // Accounts in X's own responses (e.g. the Following list): name, bio, and the follow relationship.
+  function collectUsers(json) {
+    const out = [];
+    const seen = new WeakSet();
+    const walk = (o, depth) => {
+      if (!o || typeof o !== 'object' || depth > 60 || seen.has(o)) return;
+      seen.add(o);
+      if (o.rest_id && (o.legacy?.screen_name || o.core?.screen_name)) {
+        const L = o.legacy || {}, C = o.core || {}, R = o.relationship_perspectives || {};
+        const avatar = o.avatar?.image_url || L.profile_image_url_https || '';
+        out.push({
+          handle: L.screen_name || C.screen_name,
+          name: L.name || C.name || '',
+          bio: L.description || '',
+          avatar,
+          following: L.following ?? R.following,
+          followsYou: !!(L.followed_by ?? R.followed_by),
+          verified: !!(o.is_blue_verified || L.verified),
+          locked: !!(L.protected ?? o.privacy?.protected),
+          noAvatar: !avatar || /default_profile/.test(avatar),
+        });
+      }
+      for (const k in o) walk(o[k], depth + 1);
+    };
+    walk(json, 0);
+    return out;
+  }
+
   function collect(json) {
     const found = {};
     const seen = new WeakSet();
@@ -27,6 +63,11 @@
     };
     walk(json, 0);
     if (Object.keys(found).length) window.postMessage({ __xal: 'media', found }, location.origin);
+    const users = collectUsers(json);
+    if (users.length) {
+      for (const u of users) if (u.handle) usersBuf.set(u.handle.toLowerCase(), { ...usersBuf.get(u.handle.toLowerCase()), ...u });
+      window.postMessage({ __xal: 'users', users }, location.origin);
+    }
   }
 
   const isApi = (url) => /\/i\/api\/|\/graphql\//.test(url || '');

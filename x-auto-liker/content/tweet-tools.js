@@ -3,9 +3,13 @@
 (() => {
   const { XAL } = window;
   XAL.media = {};
+  XAL.users = new Map(); // accounts X itself sent us, keyed by lowercase handle
   window.addEventListener('message', (e) => {
-    if (e.source === window && e.data?.__xal === 'media') Object.assign(XAL.media, e.data.found);
+    if (e.source !== window) return;
+    if (e.data?.__xal === 'media') Object.assign(XAL.media, e.data.found);
+    if (e.data?.__xal === 'users') for (const u of e.data.users) if (u.handle) XAL.users.set(u.handle.toLowerCase(), { ...XAL.users.get(u.handle.toLowerCase()), ...u });
   });
+  window.postMessage({ __xal: 'replayUsers' }, location.origin); // get what the page loaded before we started listening
 
   /* ── inject the button ───────────────────── */
   function addButtons() {
