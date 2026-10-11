@@ -38,11 +38,6 @@ chrome.storage.local.get('tools').then(({ tools }) => {
   });
 });
 document.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => chrome.tabs.create({ url: chrome.runtime.getURL(b.dataset.open) })));
-$('openFollow').addEventListener('click', async () => {
-  const { me } = await chrome.storage.local.get('me');
-  chrome.tabs.create({ url: me ? `https://x.com/${me}/following` : 'https://x.com/home' });
-  if (!me) $('toolsHint').textContent = 'صفحه‌ی X باز شد. وقتی حسابتان لود شد، دوباره اینجا بزنید.';
-});
 
 /* ───────────── mode switch ───────────── */
 let mode = 'manual';

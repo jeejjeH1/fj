@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <title>فالوبک‌یاب با آرشیو X — X Auto Liker</title>
+  <link rel="stylesheet" href="../fonts/fonts.css">
+  <link rel="stylesheet" href="page.css">
+  <style>
+    .drop { border: 1.5px dashed rgba(255,255,255,.18); border-radius: 18px; padding: 18px; text-align: center; transition: .3s; cursor: pointer; position: relative; }
+    .drop:hover, .drop.over { border-color: rgba(255,46,126,.6); background: rgba(255,46,126,.06); }
+    .drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .drop.done { border-style: solid; border-color: rgba(47,227,154,.5); }
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-bottom: 14px; }
+    .steps ol { padding-right: 18px; color: var(--muted); font-size: 13px; }
+    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin: 14px 0; }
+    .kpi b { display: block; font-size: 28px; font-weight: 900; }
+    .kpi span { color: var(--muted); font-size: 12.5px; }
+    .list { max-height: 52vh; overflow: auto; border-radius: 16px; background: rgba(0,0,0,.25); padding: 6px; margin-top: 10px; }
+    .row { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 12px; cursor: pointer; }
+    .row:hover { background: rgba(255,255,255,.05); }
+    .row input { width: 17px; height: 17px; accent-color: #ff2e7e; flex: none; }
+    .row .id { direction: ltr; font-variant-numeric: tabular-nums; color: var(--muted); font-size: 12.5px; }
+    .bar { position: sticky; bottom: 0; margin-top: 14px; padding: 12px; border-radius: 18px; background: rgba(10,9,18,.9); border: 1px solid var(--card-b); backdrop-filter: blur(12px); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .note { font-size: 12.5px; color: #ffd28a; background: rgba(255,173,31,.1); border: 1px solid rgba(255,173,31,.35); border-radius: 12px; padding: 10px 12px; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <div class="aurora"><i></i><i></i></div>
+  <div class="wrap">
+    <header class="top">
+      <div class="logo">📥</div>
+      <div><h1>فالوبک‌یاب با آرشیو X</h1><p>بدون اسکرول و بدون درخواست به X. فقط فایل‌هایی که خودِ X به شما می‌دهد.</p></div>
+    </header>
+
+    <section class="card">
+      <h2>۱. گرفتن آرشیو از X</h2>
+      <div class="steps">
+        <ol>
+          <li>در X بروید به <b>تنظیمات ← حساب شما ← دانلود آرشیو داده</b> (Download an archive of your data).</li>
+          <li>رمز عبورتان را وارد کنید و درخواست بدهید. X معمولاً چند ساعت تا یک روز زمان می‌برد و ایمیل می‌فرستد.</li>
+          <li>فایل زیپ را باز کنید و دو فایل <b>data/following.js</b> و <b>data/follower.js</b> را پیدا کنید.</li>
+        </ol>
+        <ol>
+          <li>هر دو فایل را در کارت‌های زیر بکشید یا انتخاب کنید.</li>
+          <li>اکستنشن فهرست کسانی را نشان می‌دهد که شما دنبال‌شان می‌کنید ولی آن‌ها شما را دنبال نمی‌کنند.</li>
+          <li>انتخاب کنید و آنفالو را شروع کنید.</li>
+        </ol>
+      </div>
+      <div class="steps">
+        <label class="card drop" id="dropF"><input type="file" accept=".js,.txt" data-kind="following">
+          <div style="font-size:26px">➕</div><b>following.js</b><div class="muted" id="stF">کسانی که شما دنبال می‌کنید</div></label>
+        <label class="card drop" id="dropR"><input type="file" accept=".js,.txt" data-kind="follower">
+          <div style="font-size:26px">👥</div><b>follower.js</b><div class="muted" id="stR">دنبال‌کننده‌های شما</div></label>
+      </div>
+      <div class="note" id="msg" hidden></div>
+    </section>
+
+    <section class="card" id="result" hidden style="margin-top:14px">
+      <div class="kpis">
+        <div class="kpi"><b id="kF">۰</b><span>دنبال می‌کنید</span></div>
+        <div class="kpi"><b id="kR">۰</b><span>دنبال‌کننده دارید</span></div>
+        <div class="kpi"><b id="kN" style="color:#ff2e7e">۰</b><span>فالوبک نداده‌اند</span></div>
+      </div>
+      <div class="row" style="padding:0;cursor:default">
+        <input type="search" id="q" placeholder="جستجوی شناسه…" style="flex:1">
+        <button class="btn ghost sm" id="all">انتخاب همه</button>
+        <button class="btn ghost sm" id="none">هیچ‌کدام</button>
+        <button class="btn ghost sm" id="copy">کپی شناسه‌ها</button>
+      </div>
+      <div class="list" id="list"></div>
+      <div class="bar">
+        <b id="sel">۰ انتخاب‌شده</b>
+        <button class="btn" id="manual" style="margin-right:auto">آنفالو دستی (یکی‌یکی)</button>
+        <button class="btn ghost" id="auto">آنفالو خودکار…</button>
+      </div>
+      <div class="note" id="autoWarn" hidden>آنفالوی خودکار و انبوه خلاف قوانین X است و می‌تواند باعث محدود شدن حساب شود. حالت دستی امن‌تر است.</div>
+      <div class="row" id="autoCfg" hidden style="padding:0;cursor:default;margin-top:10px">
+        <span>فاصله بین هر آنفالو (ثانیه):</span>
+        <input type="number" id="mn" min="20" value="30" style="width:80px"> تا <input type="number" id="mx" min="20" value="60" style="width:80px">
+        <span>سقف روزانه:</span><input type="number" id="cap" min="1" max="400" value="50" style="width:80px">
+        <button class="btn sm" id="go">شروع</button>
+      </div>
+    </section>
+  </div>
+  <script src="archive.js"></script>
+</body>
+</html>
