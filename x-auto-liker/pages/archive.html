@@ -6,6 +6,23 @@
   <link rel="stylesheet" href="../fonts/fonts.css">
   <link rel="stylesheet" href="page.css">
   <style>
+    :root { --bg: #080808; --surface: #111; --card: #141414; --card-b: rgba(255,255,255,.08); --accent: #ff7a2f; --accent2: #ff9a4d;
+      --grad: linear-gradient(120deg, #ff7a2f, #ff5a1f 60%, #ff9a4d); }
+    body, html { background: #080808; }
+    .aurora { display: none; }
+    .card { background: #141414; box-shadow: none; }
+    .top .logo { background: rgba(255,122,47,.12); border-color: rgba(255,122,47,.3); }
+    .tabs { display: inline-flex; gap: 4px; padding: 4px; border-radius: 12px; background: #141414; border: 1px solid var(--card-b); }
+    .tabs button { border: 0; background: none; color: #9a9a9a; padding: 8px 14px; border-radius: 9px; cursor: pointer; font: 700 13px Vazirmatn, sans-serif; }
+    .tabs button.on { background: #ff7a2f; color: #000; }
+    .hero { font: 900 40px/1.1 Vazirmatn, sans-serif; margin: 6px 0 4px; letter-spacing: -.5px; }
+    .hero em { font-style: normal; color: var(--accent); }
+    .switch { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px; color: #cfcfcf; user-select: none; }
+    .switch input { display: none; }
+    .switch i { width: 36px; height: 20px; border-radius: 20px; background: #2a2a2a; position: relative; transition: .3s; }
+    .switch i::after { content: ""; position: absolute; top: 3px; right: 3px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: .3s; }
+    .switch input:checked + i { background: #ff7a2f; }
+    .switch input:checked + i::after { transform: translateX(-16px); }
     .drop { border: 1.5px dashed rgba(255,255,255,.18); border-radius: 18px; padding: 18px; text-align: center; transition: .3s; cursor: pointer; position: relative; }
     .drop:hover, .drop.over { border-color: rgba(255,46,126,.6); background: rgba(255,46,126,.06); }
     .drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
@@ -13,12 +30,13 @@
     .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-bottom: 14px; }
     .steps ol { padding-right: 18px; color: var(--muted); font-size: 13px; }
     .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin: 14px 0; }
+    .kpi { padding: 14px 16px; }
     .kpi b { display: block; font-size: 28px; font-weight: 900; }
     .kpi span { color: var(--muted); font-size: 12.5px; }
-    .list { max-height: 52vh; overflow: auto; border-radius: 16px; background: rgba(0,0,0,.25); padding: 6px; margin-top: 10px; }
+    .list { max-height: 50vh; overflow: auto; border-radius: 16px; background: rgba(0,0,0,.25); padding: 6px; margin-top: 10px; }
     .row { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 12px; cursor: pointer; }
-    .row:hover { background: rgba(255,255,255,.05); }
-    .row input { width: 17px; height: 17px; accent-color: #ff2e7e; flex: none; }
+    .row:hover { background: rgba(255,255,255,.04); }
+    .row input { width: 17px; height: 17px; accent-color: #ff7a2f; flex: none; }
     .row .id { direction: ltr; font-variant-numeric: tabular-nums; color: var(--muted); font-size: 12.5px; }
     .bar { position: sticky; bottom: 0; margin-top: 14px; padding: 12px; border-radius: 18px; background: rgba(10,9,18,.9); border: 1px solid var(--card-b); backdrop-filter: blur(12px); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
     .note { font-size: 12.5px; color: #ffd28a; background: rgba(255,173,31,.1); border: 1px solid rgba(255,173,31,.35); border-radius: 12px; padding: 10px 12px; margin-top: 12px; }
@@ -55,20 +73,29 @@
       <div class="note" id="msg" hidden></div>
     </section>
 
-    <section class="card" id="result" hidden style="margin-top:14px">
-      <div class="kpis">
-        <div class="kpi"><b id="kF">۰</b><span>دنبال می‌کنید</span></div>
-        <div class="kpi"><b id="kR">۰</b><span>دنبال‌کننده دارید</span></div>
-        <div class="kpi"><b id="kN" style="color:#ff2e7e">۰</b><span>فالوبک نداده‌اند</span></div>
+    <section id="result" hidden style="margin-top:6px">
+      <div class="row" style="justify-content:space-between;margin:14px 0 6px">
+        <div>
+          <div class="hero">فالوبک نداده‌ها <em id="heroN">۰</em></div>
+          <div class="muted" style="font-size:13px">کسانی که شما دنبالشان می‌کنید ولی شما را دنبال نمی‌کنند.</div>
+        </div>
+        <div class="tabs" id="tabs"><button data-tab="no" class="on">فالوبک نداده‌ها</button><button data-tab="all">همه‌ی دنبال‌شوندگان</button></div>
       </div>
-      <div class="row" style="padding:0;cursor:default">
-        <input type="search" id="q" placeholder="جستجوی شناسه…" style="flex:1">
-        <button class="btn ghost sm" id="all">انتخاب همه</button>
-        <button class="btn ghost sm" id="none">هیچ‌کدام</button>
-        <button class="btn ghost sm" id="copy">کپی شناسه‌ها</button>
+      <div class="kpis" style="margin-top:12px">
+        <div class="card kpi"><b id="kF">۰</b><span>دنبال می‌کنید</span></div>
+        <div class="card kpi"><b id="kR">۰</b><span>دنبال‌کننده دارید</span></div>
+        <div class="card kpi"><b id="kM" style="color:#ff7a2f">۰</b><span>دوطرفه (دنبال هم دارید)</span></div>
       </div>
-      <div class="list" id="list"></div>
-      <div class="bar">
+      <div class="row" style="margin:12px 0">
+        <input type="search" id="q" placeholder="جستجوی شناسه…" style="flex:1;min-width:180px;background:#0c0c0c;border:1px solid var(--card-b);border-radius:12px;padding:10px 12px;color:#eee;font:inherit">
+        <label class="switch" id="protectWrap"><input type="checkbox" id="protect" checked><i></i>محافظت از دوطرفه‌ها</label>
+      </div>
+      <div class="row" style="justify-content:space-between;padding:0 4px 8px">
+        <span class="muted" style="font-size:12px" id="count"></span>
+        <span class="row" style="gap:6px"><button class="btn ghost sm" id="all">انتخاب همه</button><button class="btn ghost sm" id="none">هیچ‌کدام</button><button class="btn ghost sm" id="copy">کپی شناسه‌ها</button></span>
+      </div>
+      <div class="list" id="list" style="background:#0c0c0c;border:1px solid var(--card-b)"></div>
+      <div class="bar" style="background:#111;border:1px solid var(--card-b)">
         <b id="sel">۰ انتخاب‌شده</b>
         <button class="btn" id="manual" style="margin-right:auto">آنفالو دستی (یکی‌یکی)</button>
         <button class="btn ghost" id="auto">آنفالو خودکار…</button>

@@ -50,29 +50,51 @@ document.querySelectorAll('input[type=file]').forEach((i) => i.addEventListener(
   });
 });
 
-let notBack = [];
+let following = [];   // everyone you follow (from following.js)
+let mutualIds = new Set();
+let tab = 'no';       // 'no' = not following back, 'all' = everyone you follow
 let selected = new Set();
+
 function compare() {
   if (!files.following || !files.follower) return;
   const followers = new Set(files.follower.map((x) => x.id));
-  notBack = files.following.filter((x) => !followers.has(x.id));
+  following = files.following;
+  mutualIds = new Set(following.filter((x) => followers.has(x.id)).map((x) => x.id));
   selected = new Set();
   $('result').hidden = false;
-  $('kF').textContent = fa(files.following.length);
+  $('kF').textContent = fa(following.length);
   $('kR').textContent = fa(files.follower.length);
-  $('kN').textContent = fa(notBack.length);
+  $('kM').textContent = fa(mutualIds.size);
   draw();
 }
 
-function draw() {
+// rows for the current tab: "no" = following without a follow-back; "all" = everyone, optionally without mutuals
+function visibleRows() {
+  const protect = $('protect').checked;
   const q = $('q').value.trim();
-  const rows = notBack.filter((x) => !q || x.id.includes(q));
+  return following.filter((x) => {
+    if (tab === 'no' && mutualIds.has(x.id)) return false;
+    if (tab === 'all' && protect && mutualIds.has(x.id)) return false;
+    return !q || x.id.includes(q);
+  });
+}
+
+function draw() {
+  const rows = visibleRows();
+  const notBackCount = following.length - mutualIds.size;
+  $('heroN').textContent = fa(notBackCount);
+  document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
+  $('protectWrap').style.opacity = tab === 'all' ? 1 : 0.4;
+  $('count').textContent = `${fa(rows.length)} حساب`;
   const list = $('list');
   list.innerHTML = rows.length ? '' : '<div class="muted" style="padding:24px;text-align:center">چیزی پیدا نشد 🎉</div>';
   rows.slice(0, 300).forEach((x) => {
+    const mutual = mutualIds.has(x.id);
     const row = document.createElement('label');
     row.className = 'row';
-    row.innerHTML = `<input type="checkbox" ${selected.has(x.id) ? 'checked' : ''}><span class="id">${esc(x.id)}</span><span class="muted" style="margin-inline-start:auto;font-size:12px">${esc(x.link.replace(/^https?:\/\//, ''))}</span>`;
+    row.innerHTML = `<input type="checkbox" ${selected.has(x.id) ? 'checked' : ''}>
+      <span class="id">${esc(x.id)}</span>
+      <span style="margin-inline-start:auto;font-size:12px;color:${mutual ? '#ff7a2f' : '#6b6b6b'}">${mutual ? 'دوطرفه' : 'فالوبک نمی‌دهد'}</span>`;
     row.querySelector('input').addEventListener('change', (e) => { e.target.checked ? selected.add(x.id) : selected.delete(x.id); updateSel(); });
     list.appendChild(row);
   });
@@ -81,31 +103,34 @@ function draw() {
 }
 function updateSel() { $('sel').textContent = `${fa(selected.size)} انتخاب‌شده`; }
 
-const chosen = () => notBack.filter((x) => selected.has(x.id));
+// only accounts that do not follow back can be unfollowed from here
+const chosen = () => following.filter((x) => selected.has(x.id) && !mutualIds.has(x.id));
+
+document.querySelectorAll('#tabs button').forEach((b) => b.addEventListener('click', () => { tab = b.dataset.tab; selected.clear(); draw(); }));
+$('protect').addEventListener('change', draw);
 $('q').addEventListener('input', draw);
-$('all').addEventListener('click', () => { notBack.forEach((x) => selected.add(x.id)); draw(); });
+$('all').addEventListener('click', () => { visibleRows().forEach((x) => { if (!mutualIds.has(x.id)) selected.add(x.id); }); draw(); });
 $('none').addEventListener('click', () => { selected.clear(); draw(); });
 $('copy').addEventListener('click', () => {
-  const rows = selected.size ? chosen() : notBack;
+  const rows = selected.size ? chosen() : visibleRows().filter((x) => !mutualIds.has(x.id));
   navigator.clipboard.writeText(rows.map((x) => x.id).join('\n'));
   toast(`${fa(rows.length)} شناسه کپی شد ✓`);
 });
 
 function startUnfollow(mode, extra = {}) {
   const rows = chosen();
-  if (!rows.length) return toast('اول چند نفر را انتخاب کنید');
+  if (!rows.length) return toast('اول چند نفر را انتخاب کنید (فقط کسانی که فالوبک نمی‌دهند)');
   chrome.runtime.sendMessage({ type: 'start', kind: 'unfollow', mode, links: rows.map((x) => x.link), closeTab: true, autoNext: false, ...extra });
-  // they will leave the list once unfollowed; keep the rest for the next round
   const done = new Set(rows.map((x) => x.id));
-  notBack = notBack.filter((x) => !done.has(x.id));
+  following = following.filter((x) => !done.has(x.id));
   selected.clear();
   draw();
-  $('kN').textContent = fa(notBack.length);
+  $('kF').textContent = fa(following.length);
   toast(mode === 'manual' ? 'صف آنفالو شروع شد. در هر صفحه خودتان آنفالو کنید.' : 'آنفالو خودکار شروع شد. وضعیتش را در پنجره‌ی اکستنشن ببینید.');
 }
 $('manual').addEventListener('click', () => startUnfollow('manual'));
 $('auto').addEventListener('click', () => { $('autoWarn').hidden = false; $('autoCfg').hidden = false; });
-$('go').addEventListener('click', async () => {
+$('go').addEventListener('click', () => {
   const min = Math.max(20, +$('mn').value || 30), max = Math.max(min, +$('mx').value || 60), cap = Math.max(1, Math.min(400, +$('cap').value || 50));
   startUnfollow('auto', { delayMinMs: min * 1000, delayMaxMs: max * 1000, preMinMs: 1500, preMaxMs: 3500, dailyCap: cap });
 });
