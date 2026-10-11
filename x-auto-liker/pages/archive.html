@@ -10,6 +10,7 @@
       --grad: linear-gradient(120deg, #ff7a2f, #ff5a1f 60%, #ff9a4d); }
     body, html { background: #080808; }
     .aurora { display: none; }
+    [hidden] { display: none !important; }
     .card { background: #141414; box-shadow: none; }
     .top .logo { background: rgba(255,122,47,.12); border-color: rgba(255,122,47,.3); }
     .tabs { display: inline-flex; gap: 4px; padding: 4px; border-radius: 12px; background: #141414; border: 1px solid var(--card-b); }
@@ -18,6 +19,8 @@
     .hero { font: 900 40px/1.1 Vazirmatn, sans-serif; margin: 6px 0 4px; letter-spacing: -.5px; }
     .hero em { font-style: normal; color: var(--accent); }
     .switch { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px; color: #cfcfcf; user-select: none; }
+    .bar2 { height: 6px; border-radius: 6px; background: #1f1f1f; overflow: hidden; }
+    .bar2 i { display: block; height: 100%; width: 0; background: var(--grad); transition: width .5s; }
     .switch input { display: none; }
     .switch i { width: 36px; height: 20px; border-radius: 20px; background: #2a2a2a; position: relative; transition: .3s; }
     .switch i::after { content: ""; position: absolute; top: 3px; right: 3px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: .3s; }
@@ -100,11 +103,26 @@
         <button class="btn" id="manual" style="margin-right:auto">آنفالو دستی (یکی‌یکی)</button>
         <button class="btn ghost" id="auto">آنفالو خودکار…</button>
       </div>
+      <section class="card" id="runPanel" hidden style="margin-top:14px">
+        <div class="row" style="justify-content:space-between">
+          <div><b style="font-size:15px" id="runTitle">در حال آنفالو</b><div class="muted" style="font-size:12.5px" id="runSub"></div></div>
+          <div class="row" style="gap:6px">
+            <button class="btn ghost sm" id="pauseBtn">⏸ مکث</button>
+            <button class="btn danger sm" id="stopBtn">■ توقف</button>
+          </div>
+        </div>
+        <div class="kpis" style="margin:12px 0 8px">
+          <div class="card kpi"><b id="runDone">۰</b><span>آنفالو شده در این اجرا</span></div>
+          <div class="card kpi"><b id="runToday">۰</b><span id="runCapText">امروز از سقف</span></div>
+          <div class="card kpi"><b id="runErr" style="color:#ff7a2f">۰</b><span>خطا</span></div>
+        </div>
+        <div class="bar2"><i id="runBar"></i></div>
+      </section>
       <div class="note" id="autoWarn" hidden>آنفالوی خودکار و انبوه خلاف قوانین X است و می‌تواند باعث محدود شدن حساب شود. حالت دستی امن‌تر است.</div>
       <div class="row" id="autoCfg" hidden style="padding:0;cursor:default;margin-top:10px">
         <span>فاصله بین هر آنفالو (ثانیه):</span>
         <input type="number" id="mn" min="20" value="30" style="width:80px"> تا <input type="number" id="mx" min="20" value="60" style="width:80px">
-        <span>سقف روزانه:</span><input type="number" id="cap" min="1" max="400" value="50" style="width:80px">
+        <span>سقف روزانه:</span><input type="number" id="cap" min="1" max="50" value="20" style="width:80px">
         <button class="btn sm" id="go">شروع</button>
       </div>
     </section>

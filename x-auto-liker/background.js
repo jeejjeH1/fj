@@ -41,14 +41,24 @@ function summarize(results = [], mode = 'auto', kind = 'like') {
 }
 
 // Sleeps in small steps so Stop takes effect quickly.
+// Pause holds the run where it is: time spent paused does not count toward a wait.
+let paused = false;
 async function waitUnlessStopped(ms, runId) {
-  const end = Date.now() + ms;
-  while (Date.now() < end) {
+  let left = ms;
+  while (left > 0) {
     if (runId !== currentRun) return false;
-    await sleep(Math.min(500, end - Date.now()));
+    if (paused) { await sleep(300); continue; }
+    const step = Math.min(500, left);
+    await sleep(step);
+    left -= step;
   }
   return runId === currentRun;
 }
+async function waitWhilePaused(runId) {
+  while (paused && runId === currentRun) await sleep(300);
+  return runId === currentRun;
+}
+
 
 function navigateAndWait(tabId, url, timeoutMs = 30000) {
   return new Promise((resolve, reject) => {
@@ -138,6 +148,7 @@ async function profileActionInPage(handle, action) {
       return { result: 'error', detail: 'not logged in', fatal: true };
     }
     if (document.querySelector('[data-testid="emptyState"]')) return { result: 'error', detail: 'account not found' };
+    if (/rate limit|too many requests|unusual activity|try again later/i.test(document.body?.innerText || '')) return { result: 'error', detail: 'X shows a limit', fatal: true, fatalReason: 'X نشان داد محدودیت یا فعالیت غیرعادی؛ برای امنیت حساب متوقف شد.' };
     const st = followStateInPage();
     if (st.state === 'follow') return { result: 'already' }; // not following anymore
     if (st.state === 'following') {
@@ -191,6 +202,7 @@ async function run(opts) {
   const { links, closeTab } = opts;
   const kind = opts.kind || 'like';
   const runId = ++currentRun;
+  paused = false;
   startKeepAlive();
   await chrome.storage.local.set({
     runState: {
@@ -202,6 +214,7 @@ async function run(opts) {
   let tabId = null;
   const results = [];
   let stopReason = '';
+  let errStreak = 0;
   // Once Stop is pressed (or a new run starts) this loop must not write state anymore.
   const update = (patch) => (runId === currentRun ? setState(patch) : Promise.resolve());
   const phase = (name, index, ms = null) => update({
@@ -233,6 +246,7 @@ async function run(opts) {
             if (!(await waitUnlessStopped(pre, runId))) return;
           }
           await phase('liking', i);
+          if (!(await waitWhilePaused(runId))) return;
           outcome = await runInTab(tabId, kind, url, 'click');
           if (outcome.result === 'unfollowed') await countUnfollow();
         }
@@ -244,7 +258,9 @@ async function run(opts) {
       results.push({ url, result: outcome.result, detail: outcome.detail });
       await update({ results: [...results] });
 
-      if (outcome.fatal) { stopReason = 'وارد حساب X نشده‌اید — اول لاگین کنید.'; break; }
+      if (outcome.fatal) { stopReason = outcome.fatalReason || 'وارد حساب X نشده‌اید — اول لاگین کنید.'; break; }
+      errStreak = outcome.result === 'error' ? errStreak + 1 : 0;
+      if (errStreak >= 3) { stopReason = 'سه خطای پشت‌سرهم؛ برای امنیت حساب متوقف شد.'; break; }
 
       if (i < links.length - 1) {
         const wait = randBetween(opts.delayMinMs, opts.delayMaxMs);
@@ -316,6 +332,7 @@ async function readFollowStateInPage() {
 
 async function startManual({ links, closeTab, autoNext, kind = 'like' }) {
   currentRun++; // cancels any auto run still going
+  paused = false;
   stopKeepAlive();
   // Save the state before the first page loads, so the on-page panel finds it.
   const tab = await chrome.tabs.create({ url: 'about:blank', active: true });
@@ -386,7 +403,11 @@ chrome.tabs.onRemoved.addListener(async (tabId) => {
 chrome.commands.onCommand.addListener((cmd) => { if (cmd === 'next-link') manualNext(); });
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-  if (msg.type === 'start') {
+  if (msg.type === 'pause' || msg.type === 'resume') {
+    paused = msg.type === 'pause';
+    setState({ paused });
+    sendResponse({ ok: true });
+  } else if (msg.type === 'start') {
     const links = msg.links.slice(0, KIND[msg.kind || 'like'].max);
     if (msg.mode === 'manual') startManual({ ...msg, links });
     else run({ ...msg, links });
@@ -430,5 +451,5 @@ async function fetchDataURL(url) {
 
 // If the browser restarted, the run's tab is gone; mark the stale state as stopped.
 // (A manual run survives worker restarts, so only reset on startup/update, not on wake-up.)
-chrome.runtime.onStartup.addListener(() => setState({ running: false }));
+chrome.runtime.onStartup.addListener(() => { paused = false; setState({ running: false, paused: false }); });
 chrome.runtime.onInstalled.addListener(() => setState({ running: false }));
