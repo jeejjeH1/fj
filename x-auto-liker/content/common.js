@@ -281,4 +281,8 @@
     const me = XAL.me();
     if (me && me !== XAL._me) { XAL._me = me; chrome.storage.local.set({ me }); }
   });
+
+  chrome.runtime.onMessage.addListener((msg, _s, reply) => {
+    if (msg?.type === 'xalPing') reply({ ok: true, url: location.href });
+  });
 })();

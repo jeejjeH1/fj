@@ -386,6 +386,30 @@ async function finishManual(s, stopped) {
   });
 }
 
+/* Sync watchdog: a little after the sync tab finishes loading, check where it ended up and whether the
+   extension is running inside it. If the sync did not even start, say why (login page, no access, …). */
+chrome.tabs.onUpdated.addListener(async (tabId, info) => {
+  if (info.status !== 'complete') return;
+  const { syncJob } = await chrome.storage.local.get('syncJob');
+  if (!syncJob || syncJob.tabId !== tabId || Date.now() - syncJob.at > 5 * 60e3) return;
+  await sleep(3500); // let the page's own scripts and the content script start
+  const { syncDiag, syncState } = await chrome.storage.local.get(['syncDiag', 'syncState']);
+  if (syncDiag?.steps?.page) return; // the content script already took over
+  const tab = await chrome.tabs.get(tabId).catch(() => null);
+  if (!tab) return;
+  const injected = !!(await chrome.tabs.sendMessage(tabId, { type: 'xalPing' }).catch(() => null));
+  const url = tab.url || '';
+  const login = /\/(i\/flow\/login|login)(\/|\?|$)/.test(url);
+  const [title, detail] = login ? ['وارد X نشده‌اید', 'تب به صفحه‌ی ورود رفت. در همین مرورگر وارد X شوید و دوباره همگام‌سازی را بزنید.']
+    : !injected ? ['اکستنشن داخل صفحه‌ی X اجرا نشد', 'در chrome://extensions مطمئن شوید «دسترسی به سایت» برای اکستنشن روی «در همه‌ی سایت‌ها» یا x.com است، اکستنشن را Reload کنید و تب‌های X را رفرش کنید.']
+      : ['تب به صفحه‌ی لیست نرفت', 'اکستنشن اجرا شد ولی آدرس تب صفحه‌ی Following/Followers نیست. نام کاربری ذخیره‌شده ممکن است اشتباه باشد.'];
+  await chrome.storage.local.set({
+    syncDiag: { at: Date.now(), type: syncJob.type, path: url, steps: { tabUrl: url, injected } },
+    syncState: { ...(syncState || {}), type: syncJob.type, state: 'done', reason: login ? 'login' : !injected ? 'not_injected' : 'wrong_url', title, detail, count: 0, at: Date.now() },
+  });
+  chrome.storage.local.remove('syncJob');
+});
+
 // Show the on-page panel each time the run's tab finishes loading a link.
 chrome.tabs.onUpdated.addListener(async (tabId, info) => {
   if (info.status !== 'complete') return;

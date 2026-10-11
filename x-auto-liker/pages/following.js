@@ -183,11 +183,14 @@ function drawDiag(d, st) {
   const S = d.steps || {}, R = S.result || {};
   const line = (good, text) => `<li>${good ? '✅' : '❌'} ${text}</li>`;
   const items = [
+    ...(S.tabUrl !== undefined ? [line(!/login/.test(S.tabUrl), `تب به این آدرس رفت: <span dir="ltr">${esc(S.tabUrl)}</span>`), line(S.injected, S.injected ? 'اکستنشن داخل تب اجرا شد' : 'اکستنشن داخل تب اجرا نشد')] : []),
+    ...(S.tabUrl !== undefined ? [`<li class="muted">${esc(st.title || '')} — ${esc(st.detail || '')}</li>`] : []),
+    ...(S.tabUrl !== undefined ? [] : [
     line(!!S.page, S.page ? `صفحه‌ی ${d.type === 'following' ? 'Following' : 'Followers'} در X باز شد (${d.path})` : 'اکستنشن روی صفحه‌ی Following/Followers اجرا نشد. آدرس باز شده را بررسی کنید.'),
     line(S.job, S.job ? 'تب به‌عنوان تب همگام‌سازی شناخته شد' : 'تب به‌عنوان تب همگام‌سازی شناخته نشد'),
     line(S.reader, S.reader ? 'خواننده‌ی داخل صفحه‌ی X فعال است' : 'خواننده‌ی داخل صفحه‌ی X پاسخ نداد (احتمالاً اکستنشن را Reload نکرده‌اید یا صفحه رفرش نشده)'),
     line(R.reason === 'end' || R.count > 0, R.reason ? `نتیجه: ${R.reason} · ${R.count || 0} حساب · ${R.pages || 0} صفحه${R.status ? ` · کد ${R.status}` : ''}` : 'همگام‌سازی به نتیجه نرسید'),
-  ];
+  ])];
   if (R.seen?.length) items.push(`<li dir="ltr" style="text-align:left;color:#9a9a9a;font-size:11.5px;word-break:break-all">درخواست‌های X: ${R.seen.join(', ')}</li>`);
   $('diagList').innerHTML = items.join('');
   box.hidden = false;
