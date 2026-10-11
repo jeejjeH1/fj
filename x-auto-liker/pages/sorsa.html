@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>امتیاز Sorsa — X Auto Liker</title>
+  <link rel="stylesheet" href="../fonts/fonts.css">
+  <link rel="stylesheet" href="page.css">
+  <link rel="stylesheet" href="dark.css">
+  <style>
+    .wrap { max-width: 720px; }
+    .inp { width: 100%; background: rgba(0,0,0,.35); border: 1px solid var(--card-b); border-radius: 12px; padding: 10px 12px; color: var(--text); font: inherit; outline: none; direction: ltr; }
+    .warn { font-size: 12.5px; color: #ffd28a; background: rgba(255,173,31,.1); border: 1px solid rgba(255,173,31,.35); border-radius: 12px; padding: 10px 12px; margin-top: 12px; }
+    .row2 { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+    label.sw { display: flex; gap: 8px; align-items: center; cursor: pointer; margin-top: 14px; font-weight: 700; }
+    #msg { margin-top: 10px; font-size: 13px; }
+    body.embed .wrap { padding: 8px 14px 24px; max-width: none; }
+    body.embed header.top .logo, body.embed header.top p { display: none; }
+  </style>
+</head>
+<body>
+  <div class="aurora"><i></i><i></i></div>
+  <div class="wrap">
+    <header class="top"><div class="logo">🏅</div><div><h1>امتیاز Sorsa</h1><p>نمایش Sorsa Score روی پروفایل‌ها</p></div></header>
+    <section class="card">
+      <h2>کلید API سورسا</h2>
+      <p class="muted" style="font-size:13px;margin:4px 0 10px">کلید را از حساب Sorsa بگیرید. کلید فقط روی همین مرورگر ذخیره می‌شود و فقط به api.sorsa.io فرستاده می‌شود، نه به X.</p>
+      <input id="key" class="inp" type="password" placeholder="Sorsa API key" autocomplete="off" spellcheck="false">
+      <label class="sw"><input type="checkbox" id="on"> نمایش امتیاز روی پروفایل‌ها</label>
+      <div class="row2">
+        <button class="btn" id="save">ذخیره</button>
+        <button class="btn ghost" id="test">تست کلید</button>
+      </div>
+      <div id="msg"></div>
+      <div class="warn">وقتی این گزینه روشن باشد، نام کاربری هر پروفایلی که باز می‌کنید برای Sorsa فرستاده می‌شود و از اعتبار یا سقف درخواست‌های کلید شما مصرف می‌کند. نتیجه ۱۲ ساعت ذخیره می‌شود. Sorsa Score یک شاخص تأثیرگذاری است که بیشتر برای حوزه‌ی کریپتو طراحی شده.</div>
+    </section>
+  </div>
+  <script src="../i18n-dict.js"></script>
+  <script src="../i18n.js"></script>
+  <script src="sorsa.js"></script>
+</body>
+</html>

@@ -579,6 +579,41 @@ async function aiTestKey(key) {
   return { ok: true, label: d.label || '', free: !!d.is_free_tier, usage: d.usage };
 }
 
+// ── Sorsa Score (optional, off by default): official API, the user's own key, background-only ─────────────
+const SORSA = 'https://api.sorsa.io/v3';
+function sorsaPick(d) {
+  if (typeof d === 'number') return d;
+  if (!d || typeof d !== 'object') return null;
+  for (const [k, v] of Object.entries(d)) if (/score/i.test(k) && v !== '' && v !== null && isFinite(Number(v))) return Number(v);
+  for (const v of Object.values(d)) if (v && typeof v === 'object') { const r = sorsaPick(v); if (r !== null) return r; }
+  return null;
+}
+async function sorsaFetch(key, handle) {
+  const res = await fetch(`${SORSA}/score?username=${encodeURIComponent(handle)}`, { headers: { ApiKey: key, Accept: 'application/json' } });
+  if (res.status === 401 || res.status === 403) return { ok: false, code: 'auth', error: 'کلید Sorsa معتبر نیست.' };
+  if (res.status === 402 || res.status === 429) return { ok: false, code: 'limit', error: 'سقف یا اعتبار Sorsa تمام شده است.' };
+  if (res.status === 404) return { ok: true, score: null };
+  if (!res.ok) return { ok: false, code: 'failed', error: `خطای Sorsa ${res.status}` };
+  let data = null;
+  try { data = await res.json(); } catch { /* keep null */ }
+  return { ok: true, score: sorsaPick(data) };
+}
+async function sorsaScore(handle) {
+  const { sorsa = {}, sorsaCache = {} } = await chrome.storage.local.get(['sorsa', 'sorsaCache']);
+  if (!sorsa.enabled || !sorsa.key) return { ok: false, code: 'off' };
+  const k = String(handle).toLowerCase();
+  const hit = sorsaCache[k];
+  if (hit && Date.now() - hit.at < 12 * 3600e3) return { ok: true, score: hit.score, cached: true };
+  const r = await sorsaFetch(sorsa.key, handle);
+  if (r.ok) {
+    sorsaCache[k] = { score: r.score, at: Date.now() };
+    const keys = Object.keys(sorsaCache);
+    if (keys.length > 500) for (const o of keys.sort((a, c) => sorsaCache[a].at - sorsaCache[c].at).slice(0, keys.length - 500)) delete sorsaCache[o];
+    await chrome.storage.local.set({ sorsaCache });
+  }
+  return r;
+}
+
 let missQueue = Promise.resolve();
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === 'i18nMiss') {
@@ -588,6 +623,14 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       if (!a.includes(msg.key)) await chrome.storage.local.set({ i18nMisses: [...a, msg.key] });
     });
     return;
+  }
+  if (msg.type === 'sorsaScore') {
+    sorsaScore(msg.handle).then(sendResponse, (e) => sendResponse({ ok: false, code: 'failed', error: e.message }));
+    return true;
+  }
+  if (msg.type === 'sorsaTest') {
+    sorsaFetch(String(msg.key || ''), msg.handle || 'jack').then(sendResponse, (e) => sendResponse({ ok: false, code: 'failed', error: e.message }));
+    return true;
   }
   if (msg.type === 'aiTranslate') {
     aiTranslate(msg).then(sendResponse, (e) => sendResponse({ ok: false, code: 'failed', error: e.message }));

@@ -526,5 +526,18 @@ window.XI_DICT = {
  "💡 پیشنهاد پاسخ": "💡 Suggest reply",
  "↗ باز کردن توییت": "↗ Open tweet",
  "✓ انجام شد": "✓ Done",
- "همه": "All"
+ "همه": "All",
+ "امتیاز Sorsa": "Sorsa Score",
+ "امتیاز Sorsa — X Auto Liker": "Sorsa Score — X Auto Liker",
+ "نمایش Sorsa Score روی پروفایل‌ها": "Show the Sorsa Score on profiles",
+ "نمایش امتیاز روی پروفایل‌ها (با کلید شما)": "Show the score on profiles (with your key)",
+ "کلید API سورسا": "Sorsa API key",
+ "کلید را از حساب Sorsa بگیرید. کلید فقط روی همین مرورگر ذخیره می‌شود و فقط به api.sorsa.io فرستاده می‌شود، نه به X.": "Get the key from your Sorsa account. It's stored only in this browser and sent only to api.sorsa.io, never to X.",
+ "نمایش امتیاز روی پروفایل‌ها": "Show the score on profiles",
+ "وقتی این گزینه روشن باشد، نام کاربری هر پروفایلی که باز می‌کنید برای Sorsa فرستاده می‌شود و از اعتبار یا سقف درخواست‌های کلید شما مصرف می‌کند. نتیجه ۱۲ ساعت ذخیره می‌شود. Sorsa Score یک شاخص تأثیرگذاری است که بیشتر برای حوزه‌ی کریپتو طراحی شده.": "While this is on, the username of every profile you open is sent to Sorsa and uses your key's credit or request limit. Results are cached for 12 hours. Sorsa Score is an influence metric designed mostly for the crypto space.",
+ "کلید Sorsa معتبر نیست.": "Sorsa key is not valid.",
+ "سقف یا اعتبار Sorsa تمام شده است.": "Sorsa limit or credit is used up.",
+ "امتیازی برای این حساب پیدا نشد": "No score found for this account",
+ "✓ کلید معتبر است (نمونه: {n})": "✓ Key is valid (sample: {n})",
+ "✓ کلید معتبر است": "✓ Key is valid"
 };
