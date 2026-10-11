@@ -403,7 +403,13 @@ chrome.tabs.onRemoved.addListener(async (tabId) => {
 chrome.commands.onCommand.addListener((cmd) => { if (cmd === 'next-link') manualNext(); });
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-  if (msg.type === 'pause' || msg.type === 'resume') {
+  if (msg.type === 'closeSelf' && _sender.tab) {
+    chrome.tabs.remove(_sender.tab.id).catch(() => {});
+    sendResponse({ ok: true });
+  } else if (msg.type === 'focusSelf' && _sender.tab) {
+    chrome.tabs.update(_sender.tab.id, { active: true }).catch(() => {});
+    sendResponse({ ok: true });
+  } else if (msg.type === 'pause' || msg.type === 'resume') {
     paused = msg.type === 'pause';
     setState({ paused });
     sendResponse({ ok: true });

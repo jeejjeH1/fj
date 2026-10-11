@@ -16,14 +16,24 @@ const els = {
 
 /* ───────────── top tabs + tools ───────────── */
 let navTab = 'like';
-try { navTab = localStorage.getItem('navTab') || 'like'; } catch { /* storage blocked */ }
+try { navTab = localStorage.getItem('navTab') || 'like'; if (navTab === 'manage') navTab = 'tools'; } catch { /* storage blocked */ }
 function setNav(t) {
   navTab = t;
-  try { localStorage.setItem('navTab', t); } catch { /* ignore */ }
-  els.navtabs.dataset.tab = t;
-  els.navtabs.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.tab === t));
+  // the manager lives under the Tools tab; remember Tools, not the embedded view
+  try { localStorage.setItem('navTab', t === 'manage' ? 'tools' : t); } catch { /* ignore */ }
+  const shown = t === 'manage' ? 'tools' : t;
+  els.navtabs.dataset.tab = shown;
+  els.navtabs.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.tab === shown));
+  document.documentElement.classList.toggle('wide', t === 'manage');
   render(state);
 }
+function openManage() {
+  const fr = $('manageFrame');
+  if (!fr.getAttribute('src')) fr.setAttribute('src', 'pages/following.html?embed=1');
+  setNav('manage');
+}
+$('openManage').addEventListener('click', openManage);
+$('manageBack').addEventListener('click', () => setNav('tools'));
 els.navtabs.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => setNav(b.dataset.tab)));
 
 const TOOL_DEFAULTS = { persianFont: true, rtlFix: true, tweetMenu: true, composer: true };
@@ -229,6 +239,7 @@ function render(s) {
   state = s;
   const showRun = !!s && (s.running || ((s.phase === 'done' || s.phase === 'stopped') && !s.dismissed));
   els.viewTools.classList.toggle('is-active', navTab === 'tools');
+  $('viewManage').classList.toggle('is-active', navTab === 'manage');
   els.viewSetup.classList.toggle('is-active', navTab === 'like' && !showRun);
   els.viewRun.classList.toggle('is-active', navTab === 'like' && showRun);
   els.pill.classList.toggle('is-running', !!s?.running);

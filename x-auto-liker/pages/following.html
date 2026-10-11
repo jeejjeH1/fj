@@ -28,6 +28,14 @@
     .tag2.nb { color: #9a9a9a; background: rgba(255,255,255,.06); }
     .star { border: 0; background: none; cursor: pointer; font-size: 17px; }
     .banner { font-size: 12.5px; color: #ffd28a; background: rgba(255,173,31,.1); border: 1px solid rgba(255,173,31,.35); border-radius: 12px; padding: 9px 12px; margin: 10px 0; }
+    /* inside the extension window */
+    body.embed .wrap { padding: 8px 14px 24px; max-width: none; }
+    body.embed header.top { margin-bottom: 10px; gap: 10px; }
+    body.embed header.top .logo { display: none; }
+    body.embed header.top h1 { font-size: 17px; }
+    body.embed .kpi b { font-size: 22px; }
+    body.embed .hero { font-size: 26px; }
+    body.embed #list { max-height: 34vh !important; }
   </style>
 </head>
 <body>
@@ -46,6 +54,13 @@
       <button data-tab="unfollowed">چه کسی آنفالو کرد</button>
     </div>
     <div class="banner" id="banner" hidden></div>
+    <div class="card" id="syncBox" hidden style="margin-bottom:12px">
+      <div class="row" style="justify-content:space-between">
+        <div><b id="syncTitle">در حال همگام‌سازی…</b><div class="muted" style="font-size:12.5px" id="syncDetail"></div></div>
+        <button class="btn danger sm" id="syncStop">■ توقف</button>
+      </div>
+      <div class="bar2" style="margin-top:10px"><i id="syncBar" style="width:12%"></i></div>
+    </div>
 
     <section id="empty" class="card" style="text-align:center;padding:40px 20px" hidden>
       <div style="font-size:42px">🔄</div>

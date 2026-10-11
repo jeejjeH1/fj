@@ -6,6 +6,9 @@ const short = (n) => (n >= 1e6 ? `${fa((n / 1e6).toFixed(1))}M` : n >= 1e4 ? `${
 const $ = (id) => document.getElementById(id);
 const toast = (m) => { const t = document.createElement('div'); t.className = 'toast'; t.textContent = m; document.body.appendChild(t); setTimeout(() => t.remove(), 2600); };
 
+const embed = new URLSearchParams(location.search).has('embed');
+if (embed) document.body.classList.add('embed');
+let syncTabId = null;
 let data = {};          // followData from storage: { following, followers }
 let me = null;
 let white = new Set();  // never unfollow these (lowercase handles)
@@ -160,11 +163,28 @@ $('csv').addEventListener('click', () => {
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = `${tab}.csv`; a.click();
 });
 
-$('syncBtn').addEventListener('click', () => {
-  if (!me) { toast('اول x.com را باز کنید تا حسابتان شناخته شود'); chrome.tabs.create({ url: 'https://x.com/home' }); return; }
+// The sync reads from an X page, so it runs in a background tab that closes itself; progress shows here.
+$('syncBtn').addEventListener('click', async () => {
+  if (!me) { toast('اول x.com را باز کنید و وارد شوید تا حسابتان شناخته شود'); chrome.tabs.create({ url: 'https://x.com/home' }); return; }
   const type = tab === 'followers' || tab === 'unfollowed' ? 'followers' : 'following';
-  chrome.tabs.create({ url: `https://x.com/${me}/${type}#xal-sync` });
+  await chrome.storage.local.set({ syncState: { type, state: 'running', count: 0, at: Date.now() } });
+  const t = await chrome.tabs.create({ url: `https://x.com/${me}/${type}#xal-sync-bg`, active: false });
+  syncTabId = t.id;
 });
+$('syncStop').addEventListener('click', () => { if (syncTabId) chrome.tabs.sendMessage(syncTabId, { type: 'syncStop' }).catch(() => {}); });
+
+function drawSync(st) {
+  const box = $('syncBox');
+  const fresh = st && Date.now() - st.at < 10 * 60e3;
+  if (!fresh) { box.hidden = true; return; }
+  const running = st.state === 'running';
+  box.hidden = !running && !(st.state === 'done' && Date.now() - st.at < 20e3);
+  $('syncBtn').disabled = running;
+  $('syncStop').hidden = !running;
+  $('syncBar').style.width = running ? `${Math.min(95, 12 + (st.count || 0) / 20)}%` : '100%';
+  $('syncTitle').textContent = running ? `در حال همگام‌سازی… ${fa(st.count || 0)} حساب` : st.title || 'تمام شد';
+  $('syncDetail').textContent = running ? 'در یک تب پس‌زمینه خوانده می‌شود و خودش بسته می‌شود.' : `${fa(st.count || 0)} حساب ذخیره شد. ${st.detail || ''}`;
+}
 
 /* ── unfollow queue ── */
 function startUnfollow(mode, extra = {}) {
@@ -186,6 +206,9 @@ $('go').addEventListener('click', () => {
 });
 
 chrome.storage.onChanged.addListener(async (c, area) => {
-  if (area === 'local' && (c.followData || c.me)) { await load(); draw(); }
+  if (area !== 'local') return;
+  if (c.followData || c.me) { await load(); draw(); }
+  if (c.syncState) drawSync(c.syncState.newValue);
 });
 load().then(draw);
+chrome.storage.local.get('syncState').then(({ syncState }) => drawSync(syncState));

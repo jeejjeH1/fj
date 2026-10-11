@@ -3,7 +3,8 @@
 (() => {
   const { XAL } = window;
   const m = location.pathname.match(/^\/([A-Za-z0-9_]{1,15})\/(following|followers)\/?$/);
-  if (!m || location.hash !== '#xal-sync') return;
+  if (!m || !/^#xal-sync(-bg)?$/.test(location.hash)) return;
+  const bgMode = location.hash === '#xal-sync-bg'; // started from the extension window: no panel, closes itself
   const type = m[2];
   const handle = m[1];
 
@@ -19,13 +20,16 @@
   };
 
   const label = type === 'following' ? 'دنبال‌شوندگان' : 'دنبال‌کنندگان';
-  const { body, close } = XAL.modal({ title: `🔄 همگام‌سازی ${label}`, onClose: () => window.postMessage({ __xal: 'syncStop' }, location.origin) });
+  const { body, close, modal } = XAL.modal({ title: `🔄 همگام‌سازی ${label}`, onClose: () => window.postMessage({ __xal: 'syncStop' }, location.origin) });
   body.innerHTML = `
     <p class="muted" style="margin-bottom:10px">فهرست از خود X خوانده می‌شود، چند حساب در هر مرحله و با مکث بین مراحل. چیزی تغییر نمی‌کند (فقط خواندن).</p>
     <div style="text-align:center;margin:14px 0 6px"><div style="font-size:42px;font-weight:900" id="c">۰</div><div class="muted">حساب خوانده شد</div></div>
     <div class="bar"><i id="b" style="width:10%"></i></div>
     <div class="row" style="margin-top:14px;justify-content:center"><button class="btn danger" id="stop">توقف</button></div>
     <div id="msg" class="muted" style="margin-top:12px;text-align:center"></div>`;
+  if (bgMode) modal.parentElement.style.display = 'none'; // runs quietly in the background tab
+  chrome.storage.local.set({ syncState: { type, state: 'running', count: 0, at: Date.now() } });
+  chrome.runtime.onMessage.addListener((msg) => { if (msg?.type === 'syncStop') window.postMessage({ __xal: 'syncStop' }, location.origin); });
   let pulse = 10;
   const t = setInterval(() => { pulse = (pulse + 6) % 100; const b = body.querySelector('#b'); if (b) b.style.width = `${pulse}%`; }, 400);
   body.querySelector('#stop').addEventListener('click', () => window.postMessage({ __xal: 'syncStop' }, location.origin));
@@ -33,12 +37,17 @@
   window.addEventListener('message', async function onMsg(e) {
     if (e.source !== window || e.data?.__xal !== 'sync' || e.data.type !== type) return;
     const d = e.data;
-    if (d.state === 'progress') { const c = body.querySelector('#c'); if (c) c.textContent = XAL.fa(d.count); return; }
+    if (d.state === 'progress') {
+      const c = body.querySelector('#c'); if (c) c.textContent = XAL.fa(d.count);
+      chrome.storage.local.set({ syncState: { type, state: 'running', count: d.count, at: Date.now() } });
+      return;
+    }
     if (d.state !== 'done') return;
     window.removeEventListener('message', onMsg);
     clearInterval(t);
 
     const [title, detail] = REASONS[d.reason] || REASONS.error;
+    const needsYou = d.reason === 'auth' || d.reason === 'no_request';
     if (d.users.length) {
       const { followData = {} } = await chrome.storage.local.get('followData');
       const old = followData[type];
@@ -50,6 +59,12 @@
       };
       await chrome.storage.local.set({ followData, me: handle });
     }
+    chrome.storage.local.set({ syncState: { type, state: 'done', reason: d.reason, title, detail, count: d.users.length, at: Date.now() } });
+    if (bgMode) {
+      // the result is already in the extension window; close this tab unless X needs the user (login / refresh)
+      if (needsYou) { modal.parentElement.style.display = ''; chrome.runtime.sendMessage({ type: 'focusSelf' }); }
+      else { chrome.runtime.sendMessage({ type: 'closeSelf' }); return; }
+    }
     body.innerHTML = `<div style="text-align:center;padding:10px 0">
       <div style="font-size:34px;font-weight:900">${XAL.fa(d.users.length)}</div>
       <div style="font-weight:700;margin:4px 0">${title}</div><div class="muted">${detail}</div>
@@ -57,7 +72,7 @@
     body.querySelector('#x').addEventListener('click', close);
     const openIt = () => { XAL.openPage(`pages/following.html?tab=${type}`); close(); };
     body.querySelector('#open')?.addEventListener('click', openIt);
-    if (d.users.length && d.reason === 'end') setTimeout(openIt, 800);
+    if (d.users.length && d.reason === 'end' && !bgMode) setTimeout(openIt, 800);
   });
 
   history.replaceState(null, '', location.pathname); // drop the #xal-sync marker so a refresh does not sync again

@@ -287,3 +287,13 @@ kbd { margin-inline-start: auto; font: 500 10.5px/1 Vazirmatn, monospace; paddin
 .tile b { font-size: 13px; }
 .tile small { color: var(--muted); font-size: 10.5px; }
 .hint-line { font-size: 11px; color: var(--muted); text-align: center; }
+
+/* ── embedded following manager: the popup widens and the header gives way ── */
+html.wide, html.wide body { width: 780px; }
+html.wide .top { display: none; }
+html.wide .navtabs { margin-top: 10px; }
+html.wide .views { height: 520px; }
+#viewManage { padding: 0; display: flex; flex-direction: column; overflow: hidden; }
+#viewManage .manage-back { align-self: flex-start; margin: 4px 16px 6px; border: 0; background: none; color: var(--muted); cursor: pointer; font: 700 12px Vazirmatn, Tahoma, sans-serif; }
+#viewManage .manage-back:hover { color: var(--text); }
+#manageFrame { flex: 1; width: 100%; border: 0; border-radius: 14px 14px 0 0; background: #080808; }
